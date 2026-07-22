@@ -44,7 +44,7 @@ pub fn generate(path: &str, content: &str, file_bytes: u64, threshold: u64, max_
     let kb = file_bytes as f64 / 1024.0;
     let threshold_kb = threshold as f64 / 1024.0;
     let header = format!(
-        "stk clamp: {path} \u{2014} {kb:.1} KB, {total_lines} lines (threshold {threshold_kb:.0} KB). Outline below;\nfetch only what you need with Read(file_path, offset, limit)."
+        "stk clamp: {path}, {kb:.1} KB, {total_lines} lines (threshold {threshold_kb:.0} KB). Outline below;\nfetch only what you need with Read(file_path, offset, limit)."
     );
 
     let mut entries: Vec<String> = entries_for(path, content).iter().map(|e| clip(e)).collect();

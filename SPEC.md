@@ -1,4 +1,4 @@
-# stk — Session Token Killer
+# stk: Session Token Killer
 
 Sibling to RTK (Rust Token Killer). RTK compresses shell command output; stk clamps the
 fattest remaining context stream: the native `Read` tool. Measured on 250 real Claude Code
@@ -47,7 +47,7 @@ On ANY internal error: allow (fail-open). The hook must never block a read it ca
 Header + structure map + retrieval instructions. Target ≤ 60 lines / ≤ 2.5KB. Example:
 
 ```
-stk clamp: C:\repo\src\big.ts — 84.3 KB, 2140 lines (threshold 16 KB). Outline below;
+stk clamp: C:\repo\src\big.ts, 84.3 KB, 2140 lines (threshold 16 KB). Outline below;
 fetch only what you need with Read(file_path, offset, limit).
 
    1  import { … } (12 import lines)
@@ -69,19 +69,19 @@ Outline generator (deterministic, no model):
     (fn/class/struct/impl/interface/def/export/pub/function), attribute of `#[test]`-style
     lines skipped; collapse consecutive imports to one count line.
   - markdown: heading lines (`#`…), fenced-code-block count.
-  - json: top-level keys (+ child keys to depth 2), array lengths — never values.
+  - json: top-level keys (+ child keys to depth 2), array lengths, never values.
   - other text: first 10 lines + last 5 lines + total count.
 - Hard cap: if outline would exceed 80 lines, keep first 60 + `… (+N more entries)`.
 - Always include exact total line count so `offset=1, limit=N` full fetch is expressible.
 
 ## Session store
 
-`%LOCALAPPDATA%\stk\sessions\<session_id>.jsonl` — append-only records:
+`%LOCALAPPDATA%\stk\sessions\<session_id>.jsonl` (append-only records):
 `{"ts":…,"file":…,"size":…,"hash":"sha1 of content","action":"allow|clamp|dup"}`
 Hash computed only for files ≤ 4 MiB (else skip dup layer). Store read = scan lines for
 latest record per path. Prune: on startup, delete session files older than 14 days.
 
-`%LOCALAPPDATA%\stk\stats.jsonl` — one record per clamp/dup:
+`%LOCALAPPDATA%\stk\stats.jsonl` (one record per clamp/dup):
 `{"ts":…,"file":…,"file_bytes":…,"sent_bytes":<outline len>,"kind":"clamp|dup"}`
 
 ## CLI surface
@@ -100,7 +100,7 @@ Config keys: `clamp_threshold` (bytes, default 16384), `outline_max_lines` (80),
 ## Non-goals (v1)
 
 - No Bash/shell output filtering (RTK owns that).
-- No diff/delta emission (measured repeat rate 3.2% — not worth a diff engine).
+- No diff/delta emission (measured repeat rate 3.2%, not worth a diff engine).
 - No PostToolUse rewriting (platform doesn't support output replacement).
 - No editing of user settings files; `stk init` prints, user installs.
 

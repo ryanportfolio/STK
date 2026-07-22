@@ -11,7 +11,7 @@ use config::Config;
 use store::Store;
 
 #[derive(Parser)]
-#[command(name = "stk", version, about = "Session Token Klamp — clamps oversized Read tool results via a Claude Code PreToolUse hook")]
+#[command(name = "stk", version, about = "Session Token Killer: clamps oversized Read tool results via a Claude Code PreToolUse hook")]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -44,7 +44,7 @@ enum HookTarget {
     Claude,
 }
 
-const INIT_SNIPPET: &str = r#"stk init — install instructions
+const INIT_SNIPPET: &str = r#"stk init: install instructions
 ================================
 
 stk never edits your settings. Add this to your Claude Code settings.json

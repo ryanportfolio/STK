@@ -1,6 +1,6 @@
 <div align="center">
 
-# STK — Session Token Killer
+# STK: Session Token Killer
 
 **A Claude Code hook that stops oversized file reads from flooding your context.**
 
@@ -18,7 +18,7 @@
 
 We mined **250 real Claude Code sessions** (27.8 MB of tool output) to find where the tokens actually go. The answer was lopsided:
 
-> **85% of all oversized (>8 KB) context came from a single source — the native `Read` tool.**
+> **85% of all oversized (>8 KB) context came from a single source: the native `Read` tool.**
 > RTK's shell hook never sees it. Nothing did. That's the gap STK fills.
 
 Big file reads are the fattest unfiltered stream left in an agent's context. STK intercepts them before they land.
@@ -33,14 +33,14 @@ STK is a single Rust binary wired in as a Claude Code `PreToolUse` hook on the `
 - **Same file, already seen this session, unchanged** → **deny with a one-line "unchanged" note.** No re-sending 50 KB the model already has.
 - **Anything STK can't analyze** (binary, missing, unreadable, malformed input) → **pass through.** Fail-open, always. STK never blocks a read it doesn't understand.
 
-Full output is never lost — the agent re-reads any range on demand. STK trades a guaranteed full dump for a cheap map plus targeted fetches.
+Full output is never lost. The agent re-reads any range on demand. STK trades a guaranteed full dump for a cheap map plus targeted fetches.
 
 ### What an outline looks like
 
 Instead of 84 KB of source hitting context, the model sees:
 
 ```
-stk clamp: src/pipeline.ts — 84.3 KB, 2140 lines (threshold 16 KB).
+stk clamp: src/pipeline.ts, 84.3 KB, 2140 lines (threshold 16 KB).
 Outline below; fetch only what you need with Read(file_path, offset, limit).
 
    1  import { … } (12 import lines)
@@ -69,7 +69,7 @@ Then print the hook snippet and add it to your Claude Code settings:
 stk init
 ```
 
-`stk init` prints the exact `PreToolUse` block to paste into `~/.claude/settings.json` (or a project `.claude/settings.json`). **STK never edits your settings for you** — you paste it, so you stay in control of what runs.
+`stk init` prints the exact `PreToolUse` block to paste into `~/.claude/settings.json` (or a project `.claude/settings.json`). **STK never edits your settings for you.** You paste it, so you stay in control of what runs.
 
 Verify the hook is live:
 
@@ -100,11 +100,11 @@ exclude           = ["*.lock"] # globs that always pass through untouched
 
 ## Honest limitations
 
-STK reports **bytes avoided** — the file bytes it kept out of context minus the small outline it sent. That number is real, but it is an **upper bound**, not a net:
+STK reports **bytes avoided**: the file bytes it kept out of context minus the small outline it sent. That number is real, but read it as an **upper bound**. Here is what it does not capture:
 
 - When the agent needs the actual content, it re-reads specific ranges. Those follow-up reads cost tokens STK can't see from the hook, so **true savings are somewhat lower than the raw counter.** `stk gain` says so in its own output.
-- STK only sees the `Read` tool. Shell command output is [RTK](https://github.com/reachingforthejack/rtk)'s job — run both.
-- Measured session-level exact-repeat rate was only 3.2%, so STK deliberately ships **no diff/delta engine** — dedup is a cheap exact-hash check, nothing more. We built what the data justified and skipped what it didn't.
+- STK only sees the `Read` tool. Shell command output is [RTK](https://github.com/reachingforthejack/rtk)'s job. Run both.
+- Measured session-level exact-repeat rate was only 3.2%, so STK deliberately ships **no diff/delta engine**. Dedup is a cheap exact-hash check, nothing more. We built what the data justified and skipped what it didn't.
 
 ## How it fits with RTK
 
