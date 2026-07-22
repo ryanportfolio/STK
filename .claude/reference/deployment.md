@@ -4,7 +4,10 @@
 
 ## Site (GitHub Pages)
 
-- Live at https://ryanportfolio.github.io/STK/ (also the repo homepage field).
+- Public URL: https://savetokens.tips/stk/ (the repo homepage field; canonical in index.html).
+  Served by the savetokens Vercel project via rewrite `/stk/:path(.*)` ->
+  `https://ryanportfolio.github.io/STK/:path` (see savetokens repo's deployment.md).
+- Origin: https://ryanportfolio.github.io/STK/ — pushes here update /stk with no savetokens deploy.
 - Source: `main` branch, `/docs` folder, legacy (Jekyll) build — no workflow file.
   Any push to `main` touching `docs/` redeploys; builds take ~1–2 min.
 - Static only: `docs/index.html` + `styles.css` + `app.js`, no build step.
