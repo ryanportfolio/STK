@@ -1,0 +1,69 @@
+name: validate-template
+
+# Parse-gate the template's executable surface at push time. Spawn time is the
+# worst possible moment for these files to fail: a fresh project, no context,
+# and the user debugging a script they didn't write.
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Windows PowerShell 5.1 decodes BOM-less files as ANSI. Multi-byte
+      # UTF-8 chars (em-dash, smart quotes) decode into stray bytes that can
+      # terminate strings early and explode the parse. Bootstrap must stay
+      # pure ASCII.
+      - name: bootstrap/ is ASCII-only
+        run: |
+          if grep -rPIl '[^\x00-\x7F]' bootstrap/; then
+            echo "::error::Non-ASCII bytes in bootstrap/ break Windows PowerShell 5.1 (ANSI decode of BOM-less files)."
+            exit 1
+          fi
+
+      - name: PowerShell scripts parse
+        shell: pwsh
+        run: |
+          $bad = $false
+          Get-ChildItem bootstrap -Include *.ps1,*.psm1 -File -Recurse | ForEach-Object {
+            $errs = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$errs) | Out-Null
+            if ($errs) {
+              $errs | ForEach-Object { Write-Host "$($_.Extent.File):$($_.Extent.StartLineNumber): $($_.Message)" }
+              $bad = $true
+            }
+          }
+          if ($bad) { exit 1 }
+
+      - name: hooks pass bash -n
+        run: |
+          for f in .claude/hooks/*.sh; do
+            bash -n "$f"
+          done
+
+      - name: Codex skill adapters are current
+        run: node .claude/scripts/sync-codex-skills.mjs --check
+
+      - name: Codex starter contract is valid
+        run: node .claude/scripts/test-codex-contract.mjs
+
+      - name: settings.json is valid JSON
+        run: python3 -m json.tool .claude/settings.json > /dev/null
+
+      - name: plugin manifests are valid JSON
+        run: |
+          python3 -m json.tool .claude-plugin/plugin.json > /dev/null
+          python3 -m json.tool .claude-plugin/marketplace.json > /dev/null
+
+  generator-smoke:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Local generator and release ZIP work end to end
+        shell: powershell
+        run: .\bootstrap\tests\Test-NewProjectGenerator.ps1

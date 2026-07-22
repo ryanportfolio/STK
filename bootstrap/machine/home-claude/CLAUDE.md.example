@@ -1,0 +1,9 @@
+# Global Claude instructions (all projects on this machine)
+
+This is an EXAMPLE file - setup-machine.ps1 skips *.example files.
+To use: copy to CLAUDE.md in this folder, put your real global rules in,
+commit (in your private fork), and run bootstrap\setup-machine.ps1 on
+each new machine.
+
+Typical content: pointers to personal global skills, machine-wide
+preferences, private conventions that apply to every project.

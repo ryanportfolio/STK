@@ -1,0 +1,11 @@
+{
+  "name": "claude-starter",
+  "displayName": "Agent Firmware Skills",
+  "version": "1.1.2",
+  "description": "The Agent Firmware skill set for Claude Code without cloning the full template: durable memory, context controls, safe shipping, debugging, TDD, review, planning, frontend craft, and terse-mode workflows.",
+  "author": { "name": "ryanportfolio", "url": "https://github.com/ryanportfolio" },
+  "repository": "https://github.com/ryanportfolio/AI-Firmware",
+  "homepage": "https://github.com/ryanportfolio/AI-Firmware",
+  "keywords": ["agent-firmware", "starter", "workflow", "skills", "template", "tdd", "debugging", "frontend"],
+  "skills": "./.claude/skills/"
+}

@@ -1,0 +1,19 @@
+# Scratch space: labs, repro scripts, throwaway tooling (see CLAUDE.md)
+.tmp/
+
+# Per-machine Claude Code settings
+.claude/settings.local.json
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# Dependencies / build output
+node_modules/
+dist/
+build/
+
+# OS noise
+Thumbs.db
+.DS_Store
