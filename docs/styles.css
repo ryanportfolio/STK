@@ -567,7 +567,6 @@ h2 {
   opacity: 0.7;
 }
 .site-footer p { margin: 0.3rem 0; }
-.footer-note { opacity: 0.7; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
