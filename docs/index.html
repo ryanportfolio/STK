@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>STK — Session Token Killer</title>
+<title>STK · Session Token Killer</title>
 <meta name="description" content="A Claude Code hook that stops oversized file reads from flooding your context. Every number on this page was measured, and every number carries its caveat.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +20,7 @@
   <nav aria-label="Sections">
     <a href="#measurement">CH1 · MEASUREMENT</a>
     <a href="#mechanism">CH2 · MECHANISM</a>
-    <a href="#killed">CH3 · KILLED</a>
+    <a href="#killed">CH3 · CUT</a>
     <a href="#rtk">CH4 · SIBLING</a>
     <a href="#install">INSTALL</a>
   </nav>
@@ -56,7 +56,7 @@
     </div>
 
     <div class="caveat-plate">
-      <p class="caveat"><b>UPPER BOUND, NOT A NET.</b> Numbers here are the author's personal totals from this tool on this machine — one JSONL record per clamp, snapshotted into this repo daily. <code>bytes_avoided</code> = file bytes − outline bytes per clamp; tokens estimated at 4 bytes/token. When the agent re-reads specific ranges after a clamp, those follow-up tokens are not measurable from the hook, so <b>true savings are somewhat lower than this counter.</b> Not a projection. Not a benchmark. <a href="#methodology">Full methodology ↓</a></p>
+      <p class="caveat"><b>UPPER BOUND, NOT A NET.</b> Numbers here are the author's personal totals from this tool on this machine: one JSONL record per clamp, snapshotted into this repo daily. <code>bytes_avoided</code> = file bytes − outline bytes per clamp; tokens estimated at 4 bytes/token. When the agent re-reads specific ranges after a clamp, those follow-up tokens are not measurable from the hook, so <b>true savings are somewhat lower than this counter.</b> Not a projection. Not a benchmark. <a href="#methodology">Full methodology ↓</a></p>
     </div>
   </div>
 
@@ -67,7 +67,7 @@
 <section class="band" aria-label="What STK is">
   <div class="band-inner">
     <h1>A Claude&nbsp;Code hook that stops oversized file reads from flooding your context.</h1>
-    <p class="section-body wide">One Rust binary, wired in as a <code>PreToolUse</code> hook on the native <code>Read</code> tool. Big file → the agent gets a ~2&nbsp;KB line-numbered outline instead of the full dump, plus exact instructions to fetch any range with <code>Read(offset, limit)</code>. Small files, scoped reads, binaries, anything STK can't analyze — pass through untouched. Fail-open, always.</p>
+    <p class="section-body wide">One Rust binary, wired in as a <code>PreToolUse</code> hook on the native <code>Read</code> tool. Big file → the agent gets a ~2&nbsp;KB line-numbered outline instead of the full dump, plus exact instructions to fetch any range with <code>Read(offset, limit)</code>. Small files, scoped reads, binaries, anything STK can't analyze: all pass through untouched. Fail-open, always.</p>
   </div>
 </section>
 
@@ -76,17 +76,17 @@
   <div class="channel-head">
     <p class="section-label">CH1 · THE MEASUREMENT</p>
     <h2 id="ch1-title">We looked before we built</h2>
-    <p class="section-body">Before writing a line of STK, we mined 250 real Claude&nbsp;Code sessions from the author's machine — 27.8&nbsp;MB of tool output across 24,597 tool results — to find where the tokens actually go.</p>
+    <p class="section-body">Before writing a line of STK, we mined 250 real Claude&nbsp;Code sessions from the author's machine (27.8&nbsp;MB of tool output across 24,597 tool results) to find where the tokens actually go.</p>
   </div>
 
   <div class="stat-grid">
     <div class="stat-plate" data-plate>
       <p class="stat-big">38.6<span class="stat-unit">%</span></p>
-      <p class="stat-caption">of ALL tool-result bytes sat in oversized (&gt;8&nbsp;KB) results — 10.7&nbsp;MB carried by just 590 results. 2.4% of results held 38.6% of the bytes.</p>
+      <p class="stat-caption">of ALL tool-result bytes sat in oversized (&gt;8&nbsp;KB) results: 10.7&nbsp;MB carried by just 590 results. 2.4% of results held 38.6% of the bytes.</p>
     </div>
     <div class="stat-plate stat-plate--hot" data-plate>
       <p class="stat-big">85<span class="stat-unit">%</span></p>
-      <p class="stat-caption">of that oversized mass came from ONE source: the native <code>Read</code> tool — 9.1&nbsp;MB, vs 1.0&nbsp;MB from Bash. RTK's shell hook can never see it. This number is the whole reason STK exists.</p>
+      <p class="stat-caption">of that oversized mass came from ONE source: the native <code>Read</code> tool. 9.1&nbsp;MB, vs 1.0&nbsp;MB from Bash. RTK's shell hook can never see it. This number is the whole reason STK exists.</p>
     </div>
   </div>
 
@@ -103,7 +103,7 @@
   <div class="channel-head">
     <p class="section-label">CH2 · THE MECHANISM</p>
     <h2 id="ch2-title">The narrowest tool that closes the gap</h2>
-    <p class="section-body">Decision in under 10&nbsp;ms, in order. The first rule that matches wins. Everything STK doesn't understand passes through — it never blocks a read it can't analyze.</p>
+    <p class="section-body">Decision in under 10&nbsp;ms, in order. The first rule that matches wins. Everything STK doesn't understand passes through. It never blocks a read it can't analyze.</p>
   </div>
 
   <ol class="matrix" aria-label="Decision matrix">
@@ -112,7 +112,7 @@
     <li><span class="m-cond">Binary, image, PDF, notebook</span><span class="m-arrow">→</span><span class="m-act m-allow">ALLOW</span><span class="m-why">nothing to outline</span></li>
     <li><span class="m-cond">≤ 16 KB</span><span class="m-arrow">→</span><span class="m-act m-allow">ALLOW</span><span class="m-why">small files were never the problem</span></li>
     <li><span class="m-cond">Same file, same hash, this session</span><span class="m-arrow">→</span><span class="m-act m-deny">DENY</span><span class="m-why">one-line “unchanged” note, not a 50 KB re-dump</span></li>
-    <li><span class="m-cond">Big file, first sight</span><span class="m-arrow">→</span><span class="m-act m-deny">DENY</span><span class="m-why">outline instead — the payload below</span></li>
+    <li><span class="m-cond">Big file, first sight</span><span class="m-arrow">→</span><span class="m-act m-deny">DENY</span><span class="m-why">outline instead (the payload below)</span></li>
   </ol>
 
   <div class="outline-demo" data-plate>
@@ -130,20 +130,20 @@ Outline below; fetch only what you need with Read(file_path, offset, limit).
 2101  export function main()
 
 Re-read a symbol's body: Read with offset=&lt;line&gt;, limit=&lt;span&gt;.</code></pre>
-    <p class="demo-note">The shape of an 84 KB file for ~2 KB. Nothing is lost — the agent re-reads any range on demand.</p>
+    <p class="demo-note">The shape of an 84 KB file for ~2 KB. Nothing is lost: the agent re-reads any range on demand.</p>
   </div>
 </section>
 
 <!-- ============ CH3 KILLED FEATURE ============ -->
 <section class="channel" id="killed" aria-labelledby="ch3-title">
   <div class="channel-head">
-    <p class="section-label">CH3 · THE FEATURE WE KILLED</p>
+    <p class="section-label">CH3 · THE FEATURE WE CUT</p>
     <h2 id="ch3-title">The data said no, so we didn't build it</h2>
   </div>
   <div class="killed-plate" data-plate>
     <p class="killed-stat"><b>3.2%</b> measured exact-repeat rate across sessions.</p>
-    <p class="section-body wide">The plan called for a diff/delta engine — send only what changed between re-reads. Then we measured how often an agent actually re-reads the same content: 3.2% of the time. Not worth an engine. We killed it and shipped a cheap exact-hash dedup instead. <b>We built what the data justified and skipped what it didn't</b> — that discipline is the product.</p>
-    <p class="stencil"><s>DIFF ENGINE</s> · DELETED BEFORE IT EXISTED</p>
+    <p class="section-body wide">The plan called for a diff/delta engine: send only what changed between re-reads. Then we measured how often an agent re-reads the same content. 3.2% of the time. Not worth an engine. We cut it and shipped a cheap exact-hash dedup instead. <b>We built what the data justified and skipped what it didn't.</b></p>
+    <p class="stencil"><s>DIFF ENGINE</s> · CANCELLED BEFORE IT WAS BUILT</p>
   </div>
 </section>
 
@@ -152,7 +152,7 @@ Re-read a symbol's body: Read with offset=&lt;line&gt;, limit=&lt;span&gt;.</cod
   <div class="channel-head">
     <p class="section-label">CH4 · THE SIBLING</p>
     <h2 id="ch4-title">Two meters, two streams</h2>
-    <p class="section-body">STK is the sibling of <a href="https://github.com/reachingforthejack/rtk">RTK — Rust Token Killer</a>. RTK compresses shell command output per command; STK clamps file reads per session. Different halves of the same problem — together they cover the two fattest input streams an agent pays for.</p>
+    <p class="section-body">STK is the sibling of <a href="https://github.com/reachingforthejack/rtk">RTK (Rust Token Killer)</a>. RTK compresses shell command output per command; STK clamps file reads per session. Different halves of the same problem. Together they cover the two fattest input streams an agent pays for.</p>
   </div>
 
   <div class="rtk-grid">
@@ -174,7 +174,7 @@ Re-read a symbol's body: Read with offset=&lt;line&gt;, limit=&lt;span&gt;.</cod
         <p class="well well--field"><span>TOKENS SAVED</span><b id="rtk-saved">19.9M</b></p>
         <p class="well well--field"><span>REDUCTION</span><b id="rtk-pct">77.9%</b></p>
       </div>
-      <p class="caveat">RTK's own accounting, from <code>rtk gain</code> on the author's machine — reported here as-is, not measured by us.</p>
+      <p class="caveat">RTK's own accounting, from <code>rtk gain</code> on the author's machine, reported here as-is. Not measured by us.</p>
     </div>
   </div>
 </section>
@@ -186,9 +186,9 @@ Re-read a symbol's body: Read with offset=&lt;line&gt;, limit=&lt;span&gt;.</cod
     <h2 id="meth-title">How the meter is wired</h2>
   </div>
   <ol class="meth-list">
-    <li><b>Source of truth:</b> an append-only JSONL at <code>%LOCALAPPDATA%\stk\stats.jsonl</code> — one record per clamp or dedup hit, with <code>file_bytes</code> and <code>sent_bytes</code>.</li>
+    <li><b>Source of truth:</b> an append-only JSONL at <code>%LOCALAPPDATA%\stk\stats.jsonl</code>. One record per clamp or dedup hit, with <code>file_bytes</code> and <code>sent_bytes</code>.</li>
     <li><b>Aggregation:</b> <code>stk gain --json</code> emits totals plus a per-day series. <code>bytes_avoided</code> = <code>file_bytes − outline_bytes</code> per clamp. <code>est_tokens</code> = bytes ÷ 4. The divisor is an estimate and we say so.</li>
-    <li><b>Publication:</b> a scheduled job on the author's machine runs <code>stk gain --json</code> and commits the snapshot into <a href="https://github.com/ryanportfolio/STK/blob/main/docs/data/gain.json">this repo</a>. This page renders that file. No server, no credentials — “live” means daily granularity, which is the granularity the data actually has.</li>
+    <li><b>Publication:</b> a scheduled job on the author's machine runs <code>stk gain --json</code> and commits the snapshot into <a href="https://github.com/ryanportfolio/STK/blob/main/docs/data/gain.json">this repo</a>. This page renders that file. No server, no credentials. “Live” means daily granularity, the granularity the data has.</li>
     <li><b>The caveat, again:</b> after a clamp, follow-up range reads cost tokens the hook can't see. The counter is an upper bound. Under-claiming is the brand.</li>
     <li><b>Everything is auditable:</b> the decision matrix, outline formats, store layout, and fail-open contract live in <a href="https://github.com/ryanportfolio/STK/blob/main/SPEC.md">SPEC.md</a>, in the same repo as this page.</li>
   </ol>
@@ -203,14 +203,14 @@ Re-read a symbol's body: Read with offset=&lt;line&gt;, limit=&lt;span&gt;.</cod
   <div class="install-plate" data-plate>
 <pre class="terminal"><code>cargo install --path .   # build the binary
 stk init                 # prints the PreToolUse snippet</code></pre>
-    <p class="section-body wide"><code>stk init</code> prints the exact hook block to paste into <code>~/.claude/settings.json</code>. <b>STK never edits your settings for you.</b> You paste it, so you stay in control of what runs in your agent. Verify with <code>echo {} | stk hook claude</code> — prints nothing, exits 0.</p>
+    <p class="section-body wide"><code>stk init</code> prints the exact hook block to paste into <code>~/.claude/settings.json</code>. <b>STK never edits your settings for you.</b> You paste it, so you stay in control of what runs in your agent. Verify with <code>echo {} | stk hook claude</code>: prints nothing, exits 0.</p>
     <p class="config-note">Tunables (all optional): <code>clamp_threshold</code> · <code>outline_max_lines</code> · <code>dedup</code> · <code>exclude</code> globs. Details in the <a href="https://github.com/ryanportfolio/STK#configuration">README</a>.</p>
   </div>
 </section>
 
 <footer class="site-footer">
   <p>STK · <a href="https://github.com/ryanportfolio/STK">github.com/ryanportfolio/STK</a> · MIT © ryanportfolio</p>
-  <p class="footer-note">Every claim on this page traces to a number we actually measured. Every number carries its caveat.</p>
+  <p class="footer-note">Every claim on this page traces to a number we measured. Every number carries its caveat.</p>
 </footer>
 
 </main>

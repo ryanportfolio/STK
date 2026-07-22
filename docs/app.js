@@ -39,7 +39,7 @@
         "meter-sub",
         "Estimated tokens kept out of context by " +
           fmt(stk.clamps || 0) + " clamps and " +
-          fmt(stk.dup_hits || 0) + " dedup hits. Upper bound — see the caveat below."
+          fmt(stk.dup_hits || 0) + " dedup hits. Upper bound. See the caveat below."
       );
       var led = document.getElementById("meter-led");
       if (led) led.classList.add("is-live");
