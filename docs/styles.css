@@ -16,13 +16,17 @@
 
 html { background: var(--carbon); scroll-behavior: smooth; }
 
+/* everything is sized in rem/em/ch, so scaling the root is equivalent to
+   browser zoom (~130%) */
+html { font-size: 130%; }
+
 body {
   margin: 0;
   background: var(--carbon);
   color: var(--vellum);
   font-family: "Martian Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
   font-weight: 400;
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
 }
@@ -32,6 +36,7 @@ a:hover { color: var(--phosphor); }
 code {
   font-family: inherit;
   font-size: 0.92em;
+  overflow-wrap: anywhere;
   color: var(--phosphor);
   background: rgba(255, 180, 84, 0.07);
   padding: 0.05em 0.3em;
@@ -501,6 +506,8 @@ h2 {
   gap: 1.2rem;
 }
 @media (min-width: 860px) { .rtk-grid { grid-template-columns: 1.2fr 1fr; align-items: start; } }
+
+.table-scroll { overflow-x: auto; }
 
 .spec-table {
   width: 100%;

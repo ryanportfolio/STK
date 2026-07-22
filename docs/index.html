@@ -142,16 +142,18 @@ Re-read a symbol's body: Read with offset=&lt;line&gt;, limit=&lt;span&gt;.</cod
   </div>
 
   <div class="rtk-grid">
-    <table class="spec-table">
-      <caption class="visually-hidden">RTK versus STK</caption>
-      <thead><tr><th></th><th>RTK</th><th>STK</th></tr></thead>
-      <tbody>
-        <tr><th>Scope</th><td>Shell command output</td><td><code>Read</code> tool output</td></tr>
-        <tr><th>Unit</th><td>Per command</td><td>Per session</td></tr>
-        <tr><th>Mechanism</th><td>Filter &amp; compress</td><td>Outline &amp; clamp</td></tr>
-        <tr><th>Loss</th><td>Lossless (strips decor)</td><td>Lossy but recoverable (re-read on demand)</td></tr>
-      </tbody>
-    </table>
+    <div class="table-scroll">
+      <table class="spec-table">
+        <caption class="visually-hidden">RTK versus STK</caption>
+        <thead><tr><th></th><th>RTK</th><th>STK</th></tr></thead>
+        <tbody>
+          <tr><th>Scope</th><td>Shell command output</td><td><code>Read</code> tool output</td></tr>
+          <tr><th>Unit</th><td>Per command</td><td>Per session</td></tr>
+          <tr><th>Mechanism</th><td>Filter &amp; compress</td><td>Outline &amp; clamp</td></tr>
+          <tr><th>Loss</th><td>Lossless (strips decor)</td><td>Lossy but recoverable (re-read on demand)</td></tr>
+        </tbody>
+      </table>
+    </div>
 
     <div class="rtk-meter" data-plate>
       <p class="section-label">RTK · AUTHOR'S LIFETIME METER</p>
