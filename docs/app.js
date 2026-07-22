@@ -35,12 +35,8 @@
       setText("meter-number", fmt(stk.est_tokens || 0));
       setText("meter-state", "LIVE");
       setText("meter-kicker", "MEASURED ON THE AUTHOR'S MACHINE · UPDATED DAILY");
-      setText(
-        "meter-sub",
-        "Estimated tokens kept out of context by " +
-          fmt(stk.clamps || 0) + " clamps and " +
-          fmt(stk.dup_hits || 0) + " dedup hits. Upper bound. See the caveat below."
-      );
+      var sub = document.getElementById("meter-sub");
+      if (sub) sub.hidden = true;
       var led = document.getElementById("meter-led");
       if (led) led.classList.add("is-live");
       var state = document.getElementById("meter-state");
