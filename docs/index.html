@@ -21,8 +21,7 @@
   <nav aria-label="Sections">
     <a href="#measurement">CH1 · MEASUREMENT</a>
     <a href="#mechanism">CH2 · MECHANISM</a>
-    <a href="#killed">CH3 · CUT</a>
-    <a href="#rtk">CH4 · SIBLING</a>
+    <a href="#rtk">CH3 · SIBLING</a>
     <a href="#install">INSTALL</a>
   </nav>
   <a class="header-proto" href="https://github.com/ryanportfolio/STK">SOURCE ▸</a>
@@ -135,24 +134,11 @@ Re-read a symbol's body: Read with offset=&lt;line&gt;, limit=&lt;span&gt;.</cod
   </div>
 </section>
 
-<!-- ============ CH3 KILLED FEATURE ============ -->
-<section class="channel" id="killed" aria-labelledby="ch3-title">
+<!-- ============ CH3 RTK SIBLING ============ -->
+<section class="channel" id="rtk" aria-labelledby="ch3-title">
   <div class="channel-head">
-    <p class="section-label">CH3 · THE FEATURE WE CUT</p>
-    <h2 id="ch3-title">The data said no, so we didn't build it</h2>
-  </div>
-  <div class="killed-plate" data-plate>
-    <p class="killed-stat"><b>3.2%</b> measured exact-repeat rate across sessions.</p>
-    <p class="section-body wide">The plan called for a diff/delta engine: send only what changed between re-reads. Then we measured how often an agent re-reads the same content. 3.2% of the time. Not worth an engine. We cut it and shipped a cheap exact-hash dedup instead. <b>We built what the data justified and skipped what it didn't.</b></p>
-    <p class="stencil"><s>DIFF ENGINE</s> · CANCELLED BEFORE IT WAS BUILT</p>
-  </div>
-</section>
-
-<!-- ============ CH4 RTK SIBLING ============ -->
-<section class="channel" id="rtk" aria-labelledby="ch4-title">
-  <div class="channel-head">
-    <p class="section-label">CH4 · THE SIBLING</p>
-    <h2 id="ch4-title">Two meters, two streams</h2>
+    <p class="section-label">CH3 · THE SIBLING</p>
+    <h2 id="ch3-title">Two meters, two streams</h2>
     <p class="section-body">STK is the sibling of <a href="https://github.com/reachingforthejack/rtk">RTK (Rust Token Killer)</a>. RTK compresses shell command output per command; STK clamps file reads per session. Different halves of the same problem. Together they cover the two fattest input streams an agent pays for.</p>
   </div>
 

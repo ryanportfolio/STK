@@ -466,29 +466,7 @@ h2 {
 }
 .terminal code { background: none; padding: 0; color: inherit; font-size: inherit; }
 
-/* ---------- CH3 killed ---------- */
-
-.killed-plate { padding: 1.5rem 1.6rem; }
-.killed-stat { margin: 0 0 0.6rem; font-size: 1rem; }
-.killed-stat b {
-  font-size: clamp(2rem, 5vw, 3rem);
-  color: var(--phosphor);
-  text-shadow: 0 0 12px rgba(255, 180, 84, 0.4);
-  margin-right: 0.4rem;
-}
-.stencil {
-  margin: 1.2rem 0 0;
-  display: inline-block;
-  padding: 0.4rem 0.8rem;
-  border: 1px dashed var(--arm);
-  border-radius: 3px;
-  font-size: 0.7rem;
-  letter-spacing: 0.24em;
-  color: var(--arm);
-}
-.stencil s { text-decoration-thickness: 2px; }
-
-/* ---------- CH4 rtk ---------- */
+/* ---------- CH3 rtk ---------- */
 
 .rtk-grid {
   display: grid;
