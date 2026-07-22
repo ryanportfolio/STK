@@ -56,7 +56,7 @@
     </div>
 
     <div class="caveat-plate">
-      <p class="caveat"><b>UPPER BOUND, NOT A NET.</b> Numbers here are the author's personal totals from this tool on this machine: one JSONL record per clamp, snapshotted into this repo daily. <code>bytes_avoided</code> = file bytes − outline bytes per clamp; tokens estimated at 4 bytes/token. When the agent re-reads specific ranges after a clamp, those follow-up tokens are not measurable from the hook, so <b>true savings are somewhat lower than this counter.</b> Not a projection. Not a benchmark. <a href="#methodology">Full methodology ↓</a></p>
+      <p class="caveat"><b>UPPER BOUND, NOT A NET.</b> <a href="#methodology">Full methodology ↓</a></p>
     </div>
   </div>
 
@@ -67,7 +67,7 @@
 <section class="band" aria-label="What STK is">
   <div class="band-inner">
     <h1>A Claude&nbsp;Code hook that stops oversized file reads from flooding your context.</h1>
-    <p class="section-body wide">One Rust binary, wired in as a <code>PreToolUse</code> hook on the native <code>Read</code> tool. Big file → the agent gets a ~2&nbsp;KB line-numbered outline instead of the full dump, plus exact instructions to fetch any range with <code>Read(offset, limit)</code>. Small files, scoped reads, binaries, anything STK can't analyze: all pass through untouched. Fail-open, always.</p>
+    <p class="section-body wide">One Rust binary, wired in as a <code>PreToolUse</code> hook on the native <code>Read</code> tool. Big file → the agent gets a ~2&nbsp;KB line-numbered outline instead of the full dump, plus exact instructions to fetch any range with <code>Read(offset, limit)</code>. Small files, scoped reads, binaries, anything STK can't analyze: all pass through untouched.</p>
   </div>
 </section>
 
@@ -76,7 +76,7 @@
   <div class="channel-head">
     <p class="section-label">CH1 · THE MEASUREMENT</p>
     <h2 id="ch1-title">We looked before we built</h2>
-    <p class="section-body">Before writing a line of STK, we mined 250 real Claude&nbsp;Code sessions from the author's machine (27.8&nbsp;MB of tool output across 24,597 tool results) to find where the tokens actually go.</p>
+    <p class="section-body">Mined 250+ Claude&nbsp;Code sessions (27.8&nbsp;MB of tool output across 24,597 tool results) to find where the tokens actually go:</p>
   </div>
 
   <div class="stat-grid">
