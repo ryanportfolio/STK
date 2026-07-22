@@ -74,7 +74,12 @@ if (-not (Test-Path $PublishScript)) { throw "publish script not found at $Publi
 $action = "powershell -NoProfile -ExecutionPolicy Bypass -File `"$PublishScript`""
 & schtasks /Create /F /TN $TaskName /SC DAILY /ST $Time /TR $action | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "schtasks /Create failed (exit $LASTEXITCODE)" }
+
+# schtasks can't set these: catch up ASAP after a missed run, and run on battery.
+$taskSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+Set-ScheduledTask -TaskName $TaskName -Settings $taskSettings | Out-Null
 Write-Host "[ok] scheduled task '$TaskName' set: daily $Time -> $PublishScript"
+Write-Host "     (catches up as soon as possible if the $Time run is missed; runs on battery)"
 
 Write-Host ""
 Write-Host "Done. The meter starts moving after your next Claude Code sessions clamp a read;"
