@@ -32,7 +32,7 @@
     }
 
     if (live) {
-      setText("meter-number", fmt(stk.est_tokens || 0));
+      setText("meter-number", String(stk.est_tokens || 0));
       setText("meter-state", "LIVE");
       setText("meter-kicker", "MEASURED ON THE AUTHOR'S MACHINE · UPDATED DAILY");
       var sub = document.getElementById("meter-sub");
