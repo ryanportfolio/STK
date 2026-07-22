@@ -14,6 +14,13 @@ node_modules/
 dist/
 build/
 
+# Rust
+/target/
+.vendor/
+
 # OS noise
 Thumbs.db
 .DS_Store
+
+# Local offline build only (never committed)
+.cargo/
