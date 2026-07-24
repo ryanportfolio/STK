@@ -1,5 +1,5 @@
 ﻿{
-    "generated_at":  "2026-07-24T15:13:54Z",
+    "generated_at":  "2026-07-24T15:19:17Z",
     "stk":  {
                 "bytes_avoided":  3686919,
                 "caveat":  "re-fetch follow-ups after a clamp are not measurable here; real savings are somewhat lower",
