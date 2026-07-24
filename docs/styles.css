@@ -304,20 +304,39 @@ h2 {
   opacity: 0.6;
 }
 
-/* per-day sparkline bars, phosphor on glass */
+/* per-day sparkline bars, phosphor on glass, month/day tick under each */
 .spark {
   display: flex;
   align-items: flex-end;
   gap: 3px;
-  height: 44px;
   width: min(60%, 420px);
 }
-.spark span {
+.spark-col {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.spark-bar {
   min-height: 2px;
   background: var(--phosphor);
   box-shadow: 0 0 6px rgba(255, 180, 84, 0.45);
   opacity: 0.85;
+}
+/* min-height reserves the tick row on unlabelled days so every bar shares a baseline */
+.spark-day {
+  min-height: 0.75rem;
+  font-size: 0.55rem;
+  line-height: 0.75rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: rgba(237, 230, 214, 0.72);
+  /* dark halo keeps the ticks readable where the burn glow is brightest */
+  text-shadow: 0 0 4px rgba(6, 7, 8, 0.9), 0 0 2px rgba(6, 7, 8, 0.9);
 }
 .spark:empty { display: none; }
 

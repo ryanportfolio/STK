@@ -14,6 +14,14 @@
     return fmt(n) + " B";
   }
 
+  // "2026-07-23" -> "7/23". Split, not Date, so the label never shifts a day
+  // in timezones behind UTC.
+  function monthDay(iso) {
+    var p = String(iso).split("-");
+    if (p.length < 3) return String(iso);
+    return Number(p[1]) + "/" + Number(p[2]);
+  }
+
   function setText(id, text) {
     var el = document.getElementById(id);
     if (el) el.textContent = text;
@@ -51,13 +59,44 @@
     if (spark && days.length > 1) {
       var max = Math.max.apply(null, days.map(function (d) { return d.bytes_avoided || 0; }));
       if (max > 0) {
+        var ticks = [];
         days.forEach(function (d) {
+          var col = document.createElement("span");
+          col.className = "spark-col";
+          col.title = d.date + " · " + fmtBytes(d.bytes_avoided || 0) + " avoided";
+
           var bar = document.createElement("span");
+          bar.className = "spark-bar";
           var h = Math.max(2, Math.round(((d.bytes_avoided || 0) / max) * 44));
           bar.style.height = h + "px";
-          bar.title = d.date + " · " + fmtBytes(d.bytes_avoided || 0) + " avoided";
-          spark.appendChild(bar);
+          col.appendChild(bar);
+
+          var day = document.createElement("span");
+          day.className = "spark-day";
+          col.appendChild(day);
+          ticks.push(day);
+
+          spark.appendChild(col);
         });
+
+        // Only as many month/day ticks as the rendered width fits, so they
+        // never collide. Newest day always gets one; the step walks back from
+        // it. Re-run on resize since the fit depends on measured width.
+        function labelTicks() {
+          var fits = Math.max(2, Math.floor(spark.clientWidth / 44));
+          var step = Math.ceil(days.length / fits);
+          ticks.forEach(function (tick, i) {
+            var show = (days.length - 1 - i) % step === 0;
+            tick.textContent = show ? monthDay(days[i].date) : "";
+          });
+        }
+        labelTicks();
+        var relabel;
+        window.addEventListener("resize", function () {
+          clearTimeout(relabel);
+          relabel = setTimeout(labelTicks, 150);
+        });
+
         spark.setAttribute("aria-label", "Bytes avoided per day, last " + days.length + " days");
         spark.removeAttribute("aria-hidden");
         spark.setAttribute("role", "img");
