@@ -8,7 +8,7 @@
 [![Built with Rust](https://img.shields.io/badge/built_with-Rust-orange.svg)](https://www.rust-lang.org/)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20macos%20%7C%20linux-lightgrey.svg)](#install)
 
-*Sibling to [RTK (Rust Token Killer)](https://github.com/reachingforthejack/rtk). RTK kills tokens per **command**. STK kills them per **session**.*
+*Sibling to [RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk). RTK kills tokens per **command**. STK kills them per **session**.*
 
 </div>
 
@@ -103,12 +103,12 @@ exclude           = ["*.lock"] # globs that always pass through untouched
 STK reports **bytes avoided**: the file bytes it kept out of context minus the small outline it sent. That number is real, but read it as an **upper bound**. Here is what it does not capture:
 
 - When the agent needs the actual content, it re-reads specific ranges. Those follow-up reads cost tokens STK can't see from the hook, so **true savings are somewhat lower than the raw counter.** `stk gain` says so in its own output.
-- STK only sees the `Read` tool. Shell command output is [RTK](https://github.com/reachingforthejack/rtk)'s job. Run both.
+- STK only sees the `Read` tool. Shell command output is [RTK](https://github.com/rtk-ai/rtk)'s job. Run both.
 - Measured session-level exact-repeat rate was only 3.2%, so STK deliberately ships **no diff/delta engine**. Dedup is a cheap exact-hash check, nothing more. We built what the data justified and skipped what it didn't.
 
 ## How it fits with RTK
 
-|  | [RTK](https://github.com/reachingforthejack/rtk) | STK |
+|  | [RTK](https://github.com/rtk-ai/rtk) | STK |
 |---|---|---|
 | Scope | Shell command output | `Read` tool output |
 | Unit | Per command | Per session |
