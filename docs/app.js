@@ -42,15 +42,12 @@
     if (live) {
       setText("meter-number", String(stk.est_tokens || 0));
       setText("meter-state", "LIVE");
-      setText("meter-kicker", "MEASURED ON THE AUTHOR'S MACHINE · UPDATED DAILY");
       var sub = document.getElementById("meter-sub");
       if (sub) sub.hidden = true;
       var led = document.getElementById("meter-led");
       if (led) led.classList.add("is-live");
       var state = document.getElementById("meter-state");
       if (state) state.classList.add("is-live");
-      var kicker = document.getElementById("meter-kicker");
-      if (kicker) kicker.classList.add("is-live");
     }
 
     // per-day sparkline: bytes_avoided per day, last 60 days present in data

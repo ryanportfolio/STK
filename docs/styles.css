@@ -271,14 +271,6 @@ h2 {
   background: radial-gradient(closest-side, rgba(6, 7, 8, 0.88) 45%, rgba(6, 7, 8, 0) 100%);
 }
 
-.hero-kicker {
-  margin: 0 0 0.5rem;
-  font-size: 0.66rem;
-  letter-spacing: 0.3em;
-  color: var(--arm);
-}
-.hero-kicker.is-live { color: rgba(237, 230, 214, 0.6); }
-
 .hero-number { margin: 0; }
 .hero-number b {
   display: block;
@@ -373,6 +365,44 @@ h2 {
 }
 .well--field span { font-size: 0.62rem; letter-spacing: 0.28em; }
 .well--field b { font-size: 0.9rem; }
+
+/* hero source CTA: the one lit control on the chassis */
+.hero-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  border-top: var(--hairline);
+  padding-top: 1rem;
+}
+.cta-button {
+  display: inline-block;
+  text-decoration: none;
+  background: var(--phosphor);
+  color: var(--carbon);
+  font-weight: 800;
+  font-size: clamp(0.8rem, 2.2vw, 0.95rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.7rem 1.4rem;
+  border: 1px solid var(--phosphor);
+  border-radius: 4px;
+  box-shadow: 0 0 18px rgba(255, 180, 84, 0.35);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.cta-button:hover {
+  color: var(--carbon);
+  box-shadow: 0 0 28px rgba(255, 180, 84, 0.6);
+  transform: translateY(-1px);
+}
+.cta-note {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  opacity: 0.75;
+}
+.cta-note a { color: var(--phosphor); }
 
 .caveat-plate {
   border-top: var(--hairline);
