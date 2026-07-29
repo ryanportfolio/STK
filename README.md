@@ -121,7 +121,7 @@ They cover different halves of the same problem. Together they clamp the two fat
 
 ```bash
 cargo build --release
-cargo test            # 35 tests: decision matrix, outline generation, dedup, fail-open, JSON contract
+cargo test            # 38 tests: decision matrix, outline generation, dedup, fail-open, JSON contract
 ```
 
 See [SPEC.md](SPEC.md) for the full design: decision matrix, outline format per file family, session store layout, and the fail-open contract.
