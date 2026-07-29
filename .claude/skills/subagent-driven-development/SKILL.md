@@ -342,13 +342,11 @@ Done!
 ## Integration
 
 **Required workflow skills:**
-- **superpowers:using-git-worktrees** - isolated workspace (create or verify)
 - **superpowers:writing-plans** - creates the plan this skill executes
 - **superpowers:requesting-code-review** - review template for reviewer subagents
 - **superpowers:finishing-a-development-branch** - complete dev after all tasks
 
 **Subagents should use:**
-- **superpowers:test-driven-development** - TDD per task
 
 **Alternative workflow:**
 - **superpowers:executing-plans** - parallel session instead of same-session

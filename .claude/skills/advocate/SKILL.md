@@ -15,7 +15,6 @@ You made change → bias = keep it. Skill exists to fight that bias on purpose.
 
 - **`/why`** → pressure-tests a *recommendation* (pick, advice), stays well-rounded (both sides). `/advocate` → pressure-tests a *change already made*, leans adversarial: case against, since confirmation bias already argues case for.
 - **`/impartial-review` / `/code-review`** → hunt *bugs* in diff. `/advocate` → assumes code correct, asks whether it should ship — judgment call, not defect scan. Turns up real bug in passing → name it, point at bug-hunt skills; don't become one.
-- **`/verification-before-completion`** → runs checks. `/advocate` → questions change itself, not whether tests pass.
 
 ## Step 1: Lock onto what's under review
 

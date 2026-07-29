@@ -17,10 +17,7 @@ LICENSE/NOTICE files in the skill folder.
 | `finishing-a-development-branch` | obra/superpowers | MIT (in folder) | Stock |
 | `subagent-driven-development` | obra/superpowers | MIT (in folder) | Parallel-dispatch mode; implementer/reviewer prompt files |
 | `systematic-debugging` | obra/superpowers | MIT (in folder) | Stock |
-| `test-driven-development` | obra/superpowers | MIT (in folder) | Stock |
-| `using-git-worktrees` | obra/superpowers | MIT (in folder) | Stock |
 | `using-superpowers` | obra/superpowers | MIT (in folder) | Stock |
-| `verification-before-completion` | obra/superpowers | MIT (in folder) | Stock |
 | `writing-plans` | obra/superpowers | MIT (in folder) | Stock |
 | `writing-skills` | obra/superpowers | MIT (in folder) | Stock |
 | `caveman` | Community token-compression pattern (viral skill, author attribution unclear) | Reimplemented here | Intensity tiers (lite/full/ultra), output budget, auto-clarity carve-outs, persistence rules |
@@ -28,8 +25,8 @@ LICENSE/NOTICE files in the skill folder.
 
 ## Homegrown (this repo)
 
-`addskill`, `applying-best-practices`, `conflict`, `enhance-prompt`,
-`forge-repo-ui-skill`, `handoff-audit`, `impartial-review`, `init-project`, `lab`, `learning`,
+`addskill`, `conflict`, `enhance-prompt`,
+`forge-repo-ui-skill`, `handoff-audit`, `impartial-review`, `init-project`, `lab`,
 `merge`, `optimize-context`, `pr`, `recall`, `safe-ship`, `sync-starter`,
 `why`.
 

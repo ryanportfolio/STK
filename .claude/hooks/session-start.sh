@@ -72,11 +72,8 @@ print_skill_reminders() {
   cat >&2 <<'SKILLS'
 [SessionStart] Universal skills. Invoke proactively when the trigger fires:
   - caveman                       → FIRST, at session start: /caveman ultra (default prose mode)
-  - applying-best-practices       → BEFORE non-trivial edits (features, refactors, perf, bug fixes)
   - recall                        → BEFORE work in unfamiliar areas; /recall save <text> after gotchas
-  - verification-before-completion → BEFORE claiming work is done / committing / opening a PR
   - systematic-debugging          → ON any bug, test failure, or unexpected behavior
-  - test-driven-development       → BEFORE writing implementation code for a feature or bugfix
   - brainstorming                 → BEFORE designing new features or behavior changes
   - safe-ship                     → BEFORE pushing / opening a PR
   - impartial-review              → AFTER substantive changes, before merging
@@ -86,8 +83,7 @@ SKILLS
 # Weekly drift check against the claude-starter template. Quiet by design:
 # no remote configured and no network reach -> silent no-op. Counts only
 # shared-surface files the template actually ships (project-only additions
-# are not drift); applying-best-practices is excluded (tuned per project by
-# /init-project). Prints to STDOUT so Claude sees it as injected context and
+# are not drift). Prints to STDOUT so Claude sees it as injected context and
 # can suggest /sync-starter.
 check_starter_drift() {
   git rev-parse --git-dir >/dev/null 2>&1 || return 0
@@ -123,8 +119,7 @@ check_starter_drift() {
 
   local changed
   changed=$(git diff --name-only HEAD "$ref" -- \
-    .claude/skills .claude/hooks .claude/settings.json \
-    ':(exclude).claude/skills/applying-best-practices' 2>/dev/null) || return 0
+    .claude/skills .claude/hooks .claude/settings.json 2>/dev/null) || return 0
   if [ -z "$changed" ]; then
     return 0
   fi
