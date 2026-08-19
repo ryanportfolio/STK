@@ -83,3 +83,7 @@ After adding, removing, or editing a skill or `skillOverrides`, run
 `node .claude/scripts/sync-codex-skills.mjs --write` and include the generated
 `.agents/skills/` changes. Do not hand-edit generated adapters; `AGENTS.md` owns
 Codex-specific runtime safety and tool translation.
+
+## Always-on unslop
+
+Everything written for humans passes the `unslop` skill's pattern check at write time: chat prose, commit messages, PR bodies, docs, READMEs, UI text. Write clean first; never generate the tell and fix it after. Caveman compresses, unslop strips tells; both apply. Pattern list: `.claude/skills/unslop/SKILL.md`. Read it before the first substantial written artifact of a session.

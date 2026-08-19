@@ -32,6 +32,11 @@ State what done looks like before touching anything.
 - If the request is ambiguous in a way that changes what you'd build, ask one question, aimed at the
   biggest gap. Otherwise pick the sensible default, say so in one line, and proceed. Ask questions to
   change outcomes, not to feel safe.
+- Classify a fork before asking about it. If the answer is a fact you could observe by running
+  something (behavior, timing, output, whether a test separates), it is not the user's to answer:
+  build the cheapest probe and let the result decide. Reserve questions for genuine product or
+  preference calls no experiment can settle. A throwaway probe usually answers faster, and it hands
+  the user a result to react to instead of a decision to make.
 - Right-size the effort. Match the depth of this process to the stakes of the task. Deep reasoning
   belongs in planning and review, not in mechanical steps.
 
@@ -79,6 +84,9 @@ Before committing to an answer, switch roles and try to kill it.
   hide the failures that matter.
 - Treat good news as suspect. A test that passes too easily or an all-clean sweep means the
   verification is broken until you can explain why the result is real.
+- A change that "might help" is a hypothesis, not a fix; it does not ship. Every shipped line traces
+  to evidence. When evidence refutes a hypothesis, revert what it motivated. The smallest change the
+  evidence justifies ships, nothing more.
 - Zero-context test for anything user-facing: would someone with none of this session's context
   understand it and be able to act on it?
 
@@ -90,6 +98,9 @@ The report is part of the work, not an afterthought.
 - Separate verified from assumed, out loud. "I confirmed X by running Y; I'm assuming Z because I
   couldn't check it."
 - Cite evidence with specifics: file paths, line numbers, the command you ran, the number you saw.
+- Cite rules the same way. Naming a gate, skill, or principle in the report must trace to a specific
+  decision it changed; a citation with no decision behind it is decoration. Name the choice it drove
+  or drop the citation.
 - Report what you observed, not what you intended. If tests failed, say so with the output. If a step
   was skipped, say that.
 - Never soften a real problem to be agreeable. Disagreement with concrete reasoning beats compliance.
@@ -111,6 +122,9 @@ The report is part of the work, not an afterthought.
   decisions the user genuinely owns, and bundle the questions.
 - Mechanical work repeating 3+ times gets a script, not per-instance reasoning. Reasoning is for
   judgment; scripts are for repetition.
+- When a skill, playbook, or checklist supplies steps, copy them into the plan verbatim before
+  adding task-specific ones. A step you choose not to do stays in the plan with a one-line
+  `skip: <reason>`; dropping a step silently is not allowed.
 - Preserve by default. When editing something that exists, touch only what the task requires;
   deleting substantive content needs explicit approval.
 
@@ -131,7 +145,7 @@ Any one of these: stop, go back to that gate.
 
 - This is a method skill, not a workflow. It changes how you execute the current task; it produces no
   files of its own.
-- It stacks with task-specific skills (/proveit, /verify, /code-review). Those are the "how to check"
+- It stacks with task-specific skills (/impartial-review, /code-review). Those are the "how to check"
   tools; this is the discipline of when to reach for them.
 - Don't apply it to trivial work. Forcing all five gates onto a two-minute edit is its own failure
   mode.

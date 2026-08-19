@@ -281,12 +281,53 @@ wc -w skills/path/SKILL.md
 **When writing documentation that references other skills:**
 
 Use skill name only, with explicit requirement markers:
-- ✅ Good: `**REQUIRED SUB-SKILL:** Use superpowers:test-driven-development`
-- ✅ Good: `**REQUIRED BACKGROUND:** You MUST understand superpowers:systematic-debugging`
-- ❌ Bad: `See skills/testing/test-driven-development` (unclear if required)
-- ❌ Bad: `@skills/testing/test-driven-development/SKILL.md` (force-loads, burns context)
+- ✅ Good: `**REQUIRED SUB-SKILL:** Use writing-plans`
+- ✅ Good: `**REQUIRED BACKGROUND:** You MUST understand brainstorming`
+- ❌ Bad: `See skills/planning/writing-plans` (unclear if required)
+- ❌ Bad: `@skills/planning/writing-plans/SKILL.md` (force-loads, burns context)
 
 **Why no @ links:** `@` syntax force-loads files immediately, consuming 200k+ context before you need them.
+
+## Invocation Economics
+
+Every skill charges one of two loads:
+
+- **Context load** — a model-invoked skill's description sits in the context window every turn. You pay tokens and attention permanently in exchange for agent discoverability.
+- **Cognitive load** — a user-invoked skill (`disable-model-invocation: true`) costs nothing per turn, but the human must remember it exists and when to reach for it. The human is the index.
+
+Pick model-invocation only when the agent must fire the skill on its own, or another skill must reach it. If it only ever fires by hand, make it user-invoked and pay zero context load.
+
+When user-invoked skills multiply past what the human can remember, add a **router skill**: one user-invoked skill that names the others and when to reach for each. It can only hint, never fire them — user-invoked skills have no description, so nothing but the human can reach them.
+
+**Pointer wording is a variance lever.** A link's wording, not its target, decides when and how reliably the agent follows it. Must-have material behind a weakly-worded pointer is a variance bug: sharpen the wording first; inline the material only if that fails.
+
+## Steering Levers
+
+Levers that make a skill produce the same *process* every run. Predictability means same process, not same output — a brainstorming skill should predictably diverge.
+
+### Leading words
+
+A **leading word** is a compact concept already living in the model's pretraining that anchors a whole region of behavior in the fewest tokens: *tracer bullet*, *fog of war*, *relentless*, a *tight* loop. Repeated as a token (never as a sentence), it accumulates a distributed definition and recruits priors the model already holds — for free.
+
+- Hunt for restatements to collapse: "fast, deterministic, low-overhead" → a *tight* loop. Fewer tokens AND a sharper hook.
+- Prefer pretrained words. A coined term recruits no priors — you pay in definition tokens what a pretrained word gives free.
+- Use the same word in the description, the body, and your own prompts. Shared language fires the skill more reliably.
+- A leading word too weak to beat the default behavior is a no-op ("be thorough" when the agent is already thorough-ish). Fix: stronger word (*relentless*), not more prose.
+
+### Completion criteria
+
+Every step ends on a completion criterion with two properties:
+
+- **Clarity** — can the agent tell done from not-done? A vague bound ("understanding reached") invites **premature completion**: attention slips to *being done* rather than the work, and visible later steps strengthen the pull. Sharpen the criterion first (cheap, local); hide later steps by splitting the sequence only when the criterion is irreducibly fuzzy AND you actually observe the rush.
+- **Demand** — how much it requires sets the depth of work. "Every modified model accounted for" forces thoroughness where "produce a change list" does not. Demand also binds flat reference: "every rule applied" makes a checklist exhaustive.
+
+### The no-op test
+
+For every line: does it change behavior versus what the model does by default? A perfectly relevant line can still be a no-op — you pay load to say nothing. When a sentence fails the test, delete the whole sentence rather than trimming words from it. Disputes over whether a line is a no-op are disputes about the default — settle them by running the skill, not by debate.
+
+### Negation
+
+"Don't think of an elephant" names the elephant. A prohibition drags the banned behavior into context and half-reads as an instruction to do it. Default to the **positive**: state the target behavior ("write one-line comments") so the banned one is never spoken. A prohibition earns its place only as a hard guardrail you cannot phrase positively — the loophole-closing lists in this skill are exactly that case — and even then, pair it with the positive target so attention lands on what to do.
 
 ## Flowchart Usage
 
@@ -441,6 +482,16 @@ Different skill types need different test approaches:
 - Gap testing: Are common use cases covered?
 
 **Success criteria:** Agent finds and correctly applies reference information
+
+### Blinding Rules (all test types)
+
+An agent that knows it's being evaluated behaves differently, so test candidates must run blind:
+
+- No `eval`, `test`, `judge`, `experiment`, `rubric`, `score`, `compare`, `benchmark`, or `candidate` in any directory name, file name, or prompt the candidate sees.
+- Sanitize directory and slug names: use project-shaped names a user might pick, not labels like `candidate-1` or `agent-a`.
+- Hold the rubric back from candidates; it exists for the judge only.
+- A judge may know it's judging, but sees outputs by sanitized label only — never by model or variant name. Comparing two variants: one judge scores both sets in a single pass on one scale, blind to which set each came from.
+- Grade compliance from the files the candidate actually read plus the shape of its output, never from the candidate's own claims about what it did.
 
 ## Common Rationalizations for Skipping Testing
 
