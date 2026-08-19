@@ -86,4 +86,18 @@ Codex-specific runtime safety and tool translation.
 
 ## Always-on unslop
 
-Everything written for humans passes the `unslop` skill's pattern check at write time: chat prose, commit messages, PR bodies, docs, READMEs, UI text. Write clean first; never generate the tell and fix it after. Caveman compresses, unslop strips tells; both apply. Pattern list: `.claude/skills/unslop/SKILL.md`. Read it before the first substantial written artifact of a session.
+Everything written for humans passes this check at write time: chat prose, commit messages, PR bodies, docs, READMEs, UI text. Write clean first; never generate the tell and fix it after. Never drop a fact, caveat, or qualifier to remove a tell. Caveman compresses, unslop strips tells; both apply. Full pattern list + code-diff mode: `.claude/skills/unslop/SKILL.md` (load for `/unslop` passes).
+
+Core tells, banned at write time:
+
+- Em dashes. Use `.` `,` `:` `;` instead; no parenthetical or en-dash substitutes.
+- AI vocabulary: delve, crucial, pivotal, showcase, testament, underscore, vibrant, tapestry/landscape (abstract), foster, garner; leverage/utilize ("use"), facilitate ("help").
+- Puffery and promotional adjectives (groundbreaking, stunning, renowned); state what happened.
+- "Not just X, but Y"; forced rule-of-three; false ranges ("from X to Y").
+- Fancy "is": serves as, stands as, boasts, features.
+- Inline-header bullets restating the line ("**Performance:** Performance improved..."); a bold lead-in followed by genuinely new detail is fine.
+- Chatbot phrases ("Great question!", "I hope this helps!"), sycophancy, hedging stacks.
+- Filler: "in order to" is "to"; "due to the fact that" is "because"; "it is important to note that" gets deleted.
+- Abstract metaphor nouns (substrate, wedge, north star, flywheel, paradigm); pick the concrete word.
+- Say what it does, not how it feels: name the mechanism or number, else cut. A sentence that fits any project's docs says nothing about this one; cut it.
+- Active voice; adverbs become the measurement; sentence-case headings; no decorative emojis; straight quotes.
