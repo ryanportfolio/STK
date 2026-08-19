@@ -13,6 +13,10 @@ Accuracy first, brevity second. Never drop a fact, caveat, or qualifier to save 
 
 ACTIVE EVERY RESPONSE. No revert after many turns. No filler drift. Still active if unsure. Off only: "stop caveman" / "normal mode".
 
+## Unslop rides this skill
+
+Invoking caveman also activates the always-on unslop contract, for the whole session, at every intensity: everything written for humans (chat prose, commit messages, PR bodies, docs, READMEs, UI text) passes the unslop core-tells check at write time. The digest is the "Core tells, banned at write time" list in CLAUDE.md (already loaded; no read step). Full pattern list + code-diff mode: `.claude/skills/unslop/SKILL.md`, for `/unslop` passes. Write clean first; never generate the tell and fix it after. Never drop a fact, caveat, or qualifier to remove a tell. Caveman compresses, unslop strips tells; both apply. Turning caveman off does NOT turn unslop off.
+
 ## Rules
 
 Drop: articles (a/an/the), filler (just/really/basically/actually/simply), pleasantries (sure/certainly/of course/happy to), hedging. Fragments OK. Short synonyms (big not extensive, fix not "implement a solution for"). Technical terms exact. Code blocks unchanged. Errors quoted exact.
