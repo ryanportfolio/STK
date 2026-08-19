@@ -15,7 +15,9 @@ Exempt: code, symbol/function/API names, error strings, quoted text, file conten
 
 Coexists with other modes:
 
-- **caveman** compresses; unslop strips tells. Both apply to chat prose.
+- **caveman** compresses; unslop strips tells. Both apply to chat prose. Invoking caveman activates this contract, and the caveman skill carries a copy of the core-tells digest so no separate load is needed.
+
+Two condensed copies of the core tells exist outside this file: the "Core tells, banned at write time" section in CLAUDE.md and the "Unslop rides this skill" section in `.claude/skills/caveman/SKILL.md`. They are verbatim duplicates. Changing a core tell here means updating both.
 - **humanizer** is the on-request deep pass: voice-matching, file rewrites, soul-adding for long-form drafts. Unslop is the always-on floor. For "humanize this in my voice", load humanizer.
 
 ## On-demand mode (`/unslop <text or path>`)
