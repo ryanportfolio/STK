@@ -63,7 +63,7 @@ Removing patterns is half the job.
 
 ## Pattern checklist
 
-Scan for these. Numbers map to `patterns.md` for examples.
+The canonical tell list is the `unslop` skill (`.claude/skills/unslop/SKILL.md`, or `~/.claude/skills/unslop/` globally) — the always-on floor this deep pass builds on. Scan its full list every pass; don't duplicate it here. The table below is the index into `patterns.md` for before/after examples, and carries the humanizer-only extras (tail negations, authority tropes, signposting, hyphenated compounds).
 
 | # | Category | Scan for |
 |---|----------|----------|
@@ -76,15 +76,6 @@ Scan for these. Numbers map to `patterns.md` for examples.
 | 26 | Modifiers | Stacked uniform hyphenated compounds (keep required hyphens) |
 | 27–29 | Framing | Authority tropes (at its core); signposting (let's dive in); fragmented headers |
 | 30–34 | Plain speech | Abstract jargon nouns (substrate, wedge, paradigm); vague product copy; dense sentences; weak adverbs; fancy synonyms (utilize → use) |
-
-**Compact scan lines** (use every pass):
-
-- **Content** — pivotal moment, testament, evolving landscape, nestled, experts say, despite challenges… continues to thrive.
-- **Language** — delve, crucial, showcase, foster, leverage, serves as, highlighting…/ensuring…, not just X it's Y, rule of three, from X to Y.
-- **Style** — do not use excessive em dashes (—); use periods, commas, semicolons, or hyphens instead. Also cut colon comparison crutches, **Speed:** Speed improved…, Great question! / I hope this helps!
-- **Plain speech** — substrate/wedge/harness/paradigm; feelings instead of mechanism; split sentences that need a second read; utilize/leverage/facilitate.
-
-**Inline-header nuance:** bad = `**Speed:** Speed improved…` (label restates the line). OK = `**Schema in TypeScript.** Tables live in one file.` (label names; next sentence adds detail).
 
 ## Output
 
