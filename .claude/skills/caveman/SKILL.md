@@ -15,7 +15,25 @@ ACTIVE EVERY RESPONSE. No revert after many turns. No filler drift. Still active
 
 ## Unslop rides this skill
 
-Invoking caveman also activates the always-on unslop contract, for the whole session, at every intensity: everything written for humans (chat prose, commit messages, PR bodies, docs, READMEs, UI text) passes the unslop core-tells check at write time. The digest is the "Core tells, banned at write time" list in CLAUDE.md (already loaded; no read step). Full pattern list + code-diff mode: `.claude/skills/unslop/SKILL.md`, for `/unslop` passes. Write clean first; never generate the tell and fix it after. Never drop a fact, caveat, or qualifier to remove a tell. Caveman compresses, unslop strips tells; both apply. Turning caveman off does NOT turn unslop off.
+Invoking caveman also activates unslop for the whole session, at every intensity. Everything written for humans passes the check below at write time: chat prose, commit messages, PR bodies, docs, READMEs, UI text. Write clean first; never generate the tell and fix it after. Never drop a fact, caveat, or qualifier to remove a tell. Caveman compresses, unslop strips tells; both apply. Turning caveman off does NOT turn unslop off.
+
+Code, symbol/function/API names, error strings, and quoted material are exempt, same as caveman's own boundaries.
+
+Tells banned at write time:
+
+- Em dashes. Use `.` `,` `:` `;` instead; no parenthetical or en-dash substitutes.
+- AI vocabulary: delve, crucial, pivotal, showcase, testament, underscore, vibrant, tapestry/landscape (abstract), foster, garner; leverage/utilize ("use"), facilitate ("help").
+- Puffery and promotional adjectives (groundbreaking, stunning, renowned); state what happened.
+- "Not just X, but Y"; forced rule-of-three; false ranges ("from X to Y").
+- Fancy "is": serves as, stands as, boasts, features.
+- Inline-header bullets restating the line ("**Performance:** Performance improved..."); a bold lead-in followed by genuinely new detail is fine.
+- Chatbot phrases ("Great question!", "I hope this helps!"), sycophancy, hedging stacks.
+- Filler: "in order to" is "to"; "due to the fact that" is "because"; "it is important to note that" gets deleted.
+- Abstract metaphor nouns (substrate, wedge, north star, flywheel, paradigm); pick the concrete word.
+- Say what it does, not how it feels: name the mechanism or number, else cut. A sentence that fits any project's docs says nothing about this one; cut it.
+- Active voice; adverbs become the measurement; sentence-case headings; no decorative emojis; straight quotes.
+
+This list is a verbatim copy of the "Core tells, banned at write time" digest in CLAUDE.md. Editing one means editing both. The full 30-pattern list and the code-diff mode live in `.claude/skills/unslop/SKILL.md`, loaded for `/unslop` passes.
 
 ## Rules
 
