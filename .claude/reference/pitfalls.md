@@ -46,3 +46,11 @@ Prevention protocol (run every time before trusting a preview):
    the edited sources.
 4. Staleness persists after 1–2 → hard reload, unregister service workers, or
    use a fresh browser profile.
+
+### 2026-08-22: Stats publisher can diverge from remote main
+
+Symptom: the local task keeps creating snapshot commits while the live meter
+stops updating. A remote merge can advance `origin/main`; an unchecked
+non-fast-forward `git push` then fails while Windows PowerShell still exits 0.
+`scripts/publish-stats.ps1` must fetch and rebase before publishing, and must
+throw on every failed Git command so Task Scheduler records the failure.
