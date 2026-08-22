@@ -1,9 +1,9 @@
 ﻿{
-    "generated_at":  "2026-08-22T01:19:04Z",
+    "generated_at":  "2026-08-22T02:19:04Z",
     "stk":  {
-                "bytes_avoided":  33164108,
+                "bytes_avoided":  33249799,
                 "caveat":  "re-fetch follow-ups after a clamp are not measurable here; real savings are somewhat lower",
-                "clamps":  608,
+                "clamps":  609,
                 "days":  [
                              {
                                  "bytes_avoided":  986753,
@@ -192,18 +192,18 @@
                                  "dup_hits":  35
                              },
                              {
-                                 "bytes_avoided":  153248,
-                                 "clamps":  2,
+                                 "bytes_avoided":  238939,
+                                 "clamps":  3,
                                  "date":  "2026-08-22",
-                                 "dup_hits":  2
+                                 "dup_hits":  3
                              }
                          ],
-                "dup_hits":  241,
-                "est_tokens":  8291027
+                "dup_hits":  242,
+                "est_tokens":  8312449
             },
     "rtk":  {
-                "commands":  133270,
-                "tokens_saved":  "39.8M",
+                "commands":  133324,
+                "tokens_saved":  "40.0M",
                 "reduction":  "40.3%",
                 "source":  "rtk gain (RTK\u0027s own accounting)"
             }
