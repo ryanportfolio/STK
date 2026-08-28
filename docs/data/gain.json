@@ -1,5 +1,5 @@
 ﻿{
-    "generated_at":  "2026-08-28T02:19:04Z",
+    "generated_at":  "2026-08-28T03:19:07Z",
     "stk":  {
                 "bytes_avoided":  37674506,
                 "caveat":  "re-fetch follow-ups after a clamp are not measurable here; real savings are somewhat lower",
@@ -238,7 +238,7 @@
                 "est_tokens":  9418626
             },
     "rtk":  {
-                "commands":  146673,
+                "commands":  146730,
                 "tokens_saved":  "83.4M",
                 "reduction":  "51.8%",
                 "source":  "rtk gain (RTK\u0027s own accounting)"
