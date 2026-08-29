@@ -6,7 +6,7 @@ description: Use when the user asks to review, audit, or stress-test recent code
 
 You are reviewing work that was probably written too fast — possibly by you. Your job is to find what's wrong, not validate what's right. **If you wrote the code yourself, look harder, not softer.** Bias toward finding real issues, even at the cost of being uncomfortable.
 
-The hardest bias to overcome is defending code you just wrote. The fix is mechanical: dispatch the actual review to fresh-context Sonnet 4.6 subagents that have not seen the conversation that produced the code. Your job in the main session is to gather the diff, brief the subagents, and consolidate findings.
+The hardest bias to overcome is defending code you just wrote. The fix is mechanical: dispatch the actual review to fresh-context reviewer subagents that have not seen the conversation that produced the code. Your job in the main session is to gather the diff, brief the subagents, and consolidate findings.
 
 This is a two-stage split, and the stages have opposite jobs. The subagents maximize **coverage** — find everything, including uncertain and low-severity issues. You — running on the strongest available model — supply **precision**, verifying each finding before it reaches the human. Over-reporting upstream of a strong verifier is the design, not a flaw: it is the main model's job to review the subagents' work, not to rubber-stamp it.
 
@@ -23,21 +23,21 @@ State the scope you're reviewing in your first sentence so the user can redirect
 ## Step 2: Pick review mode
 
 - **Tiny diff (< 50 changed lines, single file, no schema/auth/cache code):** review inline in the main session. Spawning 5 subagents for a 20-line CSS tweak is wasteful.
-- **Everything else:** dispatch **five parallel Sonnet 4.6 subagents** (see Step 3). This is the default.
+- **Everything else:** dispatch **five parallel reviewer subagents** (see Step 3). This is the default.
 
 If you're not sure, dispatch. Subagents are cheap relative to a missed bug.
 
 **Strict quality mode (opt-in):** when the user asks for a "strict", "harsh", "thermo-nuclear", or deep maintainability review, additionally load `strict-quality-rubric.md` from this folder and append it to the Bucket D ("things the author missed") subagent's prompt — missed structural simplifications are exactly its territory. It raises the approval bar to presumptive blockers (code-judo simplifications, 1k-line rule, spaghetti growth) on top of the normal buckets; correctness review is unchanged.
 
-## Step 3: Dispatch five parallel Sonnet 4.6 review subagents
+## Step 3: Dispatch five parallel review subagents
 
 Send all five `Agent` tool calls **in a single message** so they run concurrently. Each uses:
 
 - `subagent_type: "general-purpose"`
-- `model: "sonnet"` (resolves to Sonnet 4.6 — the current Sonnet alias)
+- `model: "opus"`, or omit `model` to inherit the session model when the session already sits at Opus or above
 - A self-contained prompt — subagents do not inherit your context
 
-**Reviewer model tier.** Sonnet 4.6 is the right default — cheap, fast, and your main-session verification (Step 6) is the safety net that catches its misses. Escalate the reviewers to Opus only for the highest-stakes diffs (schema/migrations, auth, core routing logic, anything touching money or PII), where a missed bug is expensive enough to justify the cost.
+**Reviewer model tier.** Reviewers run on Opus or Sol or above. Never Sonnet, Haiku, or Luna: a bug a weaker reviewer never reports costs more than the tokens it saves, and the main-session verification (Step 6) only filters findings that were raised, it does not recover the ones nobody raised. Do not pin a version number; pick the strongest model the runtime offers at dispatch time, and inherit the session model rather than downgrading when the session already sits above Opus. Sol is the cross-vendor equivalent, reachable through the Codex CLI (see the `codex-review` skill) when you want a non-Anthropic reviewer in the mix.
 
 Each prompt must include:
 
@@ -120,7 +120,7 @@ Your job: find what's wrong, not validate what's right. Bias toward finding real
 
 Your job at this stage is coverage, not filtering. Report every issue you find,
 including ones you are uncertain about or consider low-severity. A separate merge
-step on a stronger model ranks and verifies — it is better to surface a finding
+step in the main session ranks and verifies — it is better to surface a finding
 that later gets filtered out than to silently drop a real bug. Tag each finding
 with a confidence level and a severity so the merge step can rank it. (Don't
 invent issues to pad the list — fabrication is the only thing to omit.)
@@ -157,7 +157,7 @@ LOW  — suspected; I could not fully verify within my time budget.
 
 Report LOW-confidence findings too — tag them LOW and let the main-session merge
 step adjudicate. Never drop a real finding because you're unsure; that call
-belongs downstream, on a stronger model.
+belongs downstream, in the main-session merge step.
 
 If every finding is 🟢, you didn't look hard enough. Go back and push harder
 on your bucket — especially if you're Bucket D, where 🟢-only output usually
@@ -196,7 +196,7 @@ seeing project-specific rules; the other four are deliberately context-free.
 
 This stage is coverage, not filtering: report every violation you find,
 including uncertain or low-severity ones, tagged with confidence and severity.
-The main-session merge step on a stronger model verifies and ranks.
+The main-session merge step verifies and ranks.
 
 ## Required reading (do this BEFORE looking at the diff)
 
@@ -328,7 +328,7 @@ After the findings, include:
 Be concrete about merge readiness.]
 ```
 
-If every subagent returned zero findings and your verification confirms: say so explicitly. "Five Sonnet 4.6 subagents reviewed buckets A/B/C/D/E; all returned zero findings and I confirmed the highest-suspicion items. Recommend merge." Don't manufacture nitpicks — but be extra skeptical of zero findings from Bucket D (rare on non-trivial diffs) and Bucket E (rare on any diff that touches areas the project's reference files cover — schema, theming, env vars, error surfaces).
+If every subagent returned zero findings and your verification confirms: say so explicitly. "Five subagents reviewed buckets A/B/C/D/E; all returned zero findings and I confirmed the highest-suspicion items. Recommend merge." Don't manufacture nitpicks — but be extra skeptical of zero findings from Bucket D (rare on non-trivial diffs) and Bucket E (rare on any diff that touches areas the project's reference files cover — schema, theming, env vars, error surfaces).
 
 ## Anti-patterns to avoid
 
