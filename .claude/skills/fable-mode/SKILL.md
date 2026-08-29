@@ -7,8 +7,8 @@ description: Use proactively for hard layered work with dependent steps, load-be
 
 Fable 5's working discipline, written down so any model can run it. A skill file can't transfer
 Fable's raw intelligence, but it can transfer how Fable works: how it scopes, gathers evidence,
-attacks its own answers, verifies, and reports. Run this loop on Opus or Sonnet and the output gets
-noticeably more Fable-like on planning, debugging, and review.
+attacks its own answers, verifies, and reports. Run this loop on Opus or Sol or above
+and the output gets noticeably more Fable-like on planning, debugging, and review.
 
 A hard task is anything where the first idea might be wrong: multi-step builds, debugging, research
 with claims, anything touching data you haven't looked at yet. For a one-file edit or a simple
