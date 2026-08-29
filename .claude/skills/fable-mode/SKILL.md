@@ -16,10 +16,10 @@ lookup, skip the gates and just do the work.
 
 ## The loop: five gates, in order
 
-Every hard task passes through five gates. A gate must pass before the next one opens. When a task
-stalls or a result surprises you, name which gate you're at and re-run it.
+Every hard task passes through five gates. A gate must pass before the next one opens. A surprising
+result at any later gate sends you back to Gate 2: name the gate you're at and re-run from there.
 
-### Gate 1 — Scope before work
+### Gate 1: Scope before work
 
 State what done looks like before touching anything.
 
@@ -32,6 +32,9 @@ State what done looks like before touching anything.
 - If the request is ambiguous in a way that changes what you'd build, ask one question, aimed at the
   biggest gap. Otherwise pick the sensible default, say so in one line, and proceed. Ask questions to
   change outcomes, not to feel safe.
+- Time the question by what the answer would discard. If either answer keeps the work you'd do
+  meanwhile, do that work first and ask at the fork, with the partial result attached. If one answer
+  would throw that work away, ask before starting it.
 - Classify a fork before asking about it. If the answer is a fact you could observe by running
   something (behavior, timing, output, whether a test separates), it is not the user's to answer:
   build the cheapest probe and let the result decide. Reserve questions for genuine product or
@@ -40,7 +43,7 @@ State what done looks like before touching anything.
 - Right-size the effort. Match the depth of this process to the stakes of the task. Deep reasoning
   belongs in planning and review, not in mechanical steps.
 
-### Gate 2 — Evidence before reasoning
+### Gate 2: Evidence before reasoning
 
 Never design from memory of what a file, API, or dataset "probably" looks like. Open it.
 
@@ -52,7 +55,7 @@ Never design from memory of what a file, API, or dataset "probably" looks like. 
 - Keep a live plan for anything with 3+ steps. Slice by dependency, not by category: each step's
   output feeds the next. The plan is a hypothesis, not a contract.
 
-### Gate 3 — Reason adversarially
+### Gate 3: Reason adversarially
 
 Before committing to an answer, switch roles and try to kill it.
 
@@ -70,7 +73,7 @@ Before committing to an answer, switch roles and try to kill it.
 - Two failed attempts at the same fix means the diagnosis is wrong. Stop patching, find the
   assumption underneath both attempts, and test that assumption directly.
 
-### Gate 4 — Verify before declaring done
+### Gate 4: Verify before declaring done
 
 "It ran" is not verification. Verify at the layer of the claim.
 
@@ -78,6 +81,8 @@ Before committing to an answer, switch roles and try to kill it.
   look at the page. Exit code 0 only proves the layer below the claim.
 - Use evidence you didn't generate. Re-open the file you wrote. Run the code. Screenshot the page and
   read the screenshot. Diff before against after. Count the things you claimed to count.
+- The check leaves a trace the reader can inspect: the exact command you ran and the output you saw,
+  quoted, not paraphrased. A verification with no quotable output has not happened yet.
 - Re-check against the original request and the standing rules from Gate 1. Did you build what was
   asked, and did you follow the rules you loaded?
 - Sample the tails, not just the middle: first item, last item, weirdest item. Happy-path spot checks
@@ -90,13 +95,16 @@ Before committing to an answer, switch roles and try to kill it.
 - Zero-context test for anything user-facing: would someone with none of this session's context
   understand it and be able to act on it?
 
-### Gate 5 — Report calibrated
+### Gate 5: Report calibrated
 
 The report is part of the work, not an afterthought.
 
 - Lead with the answer, then the support.
-- Separate verified from assumed, out loud. "I confirmed X by running Y; I'm assuming Z because I
-  couldn't check it."
+- Separate verified from assumed, out loud, as two labeled lines: `Verified:` what you confirmed and
+  how; `Assumed:` what you could not check and why. Either line may be empty; neither may be missing.
+- Deliver the whole scope or say what is missing. If part of the task is blocked, finish every other
+  part in full and name what you left out and why. Scaling the work down is the user's call, never a
+  quiet edit to the deliverable.
 - Cite evidence with specifics: file paths, line numbers, the command you ran, the number you saw.
 - Cite rules the same way. Naming a gate, skill, or principle in the report must trace to a specific
   decision it changed; a citation with no decision behind it is decoration. Name the choice it drove
@@ -138,6 +146,8 @@ The report is part of the work, not an afterthought.
 - You're about to report done and the evidence is your intention, not an observation. (Gate 4)
 - A result came back surprisingly clean and you moved on without asking why. (Gate 4)
 - You can't say in one sentence what done looks like. (Gate 1)
+- You're about to ask the user something a 30-second probe would answer. (Gate 1)
+- You're delivering less than was asked and haven't said so. (Gate 5)
 
 Any one of these: stop, go back to that gate.
 
