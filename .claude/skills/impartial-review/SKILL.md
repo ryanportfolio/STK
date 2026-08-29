@@ -1,5 +1,5 @@
 ---
-description: Use when the user asks to review, audit, or stress-test recent code changes with fresh independent agents; requires exposed multi-agent tools.
+description: Use when the user asks to review, audit, or stress-test recent code changes with fresh independent agents; requires exposed multi-agent tools or an authenticated Codex CLI.
 ---
 
 # Impartial review
@@ -8,7 +8,7 @@ You are reviewing work that was probably written too fast — possibly by you. Y
 
 The hardest bias to overcome is defending code you just wrote. The fix is mechanical: dispatch the actual review to fresh-context reviewer subagents that have not seen the conversation that produced the code. Your job in the main session is to gather the diff, brief the subagents, and consolidate findings.
 
-This is a two-stage split, and the stages have opposite jobs. The subagents maximize **coverage** — find everything, including uncertain and low-severity issues. You — running on the strongest available model — supply **precision**, verifying each finding before it reaches the human. Over-reporting upstream of a strong verifier is the design, not a flaw: it is the main model's job to review the subagents' work, not to rubber-stamp it.
+This is a two-stage split, and the stages have opposite jobs. The subagents maximize **coverage** — find everything, including uncertain and low-severity issues. You, holding the full diff and all five reports in one context, supply **precision**, verifying each finding before it reaches the human. Over-reporting upstream of a strong verifier is the design, not a flaw: it is the main model's job to review the subagents' work, not to rubber-stamp it.
 
 ## Step 1: Identify scope
 
@@ -31,13 +31,28 @@ If you're not sure, dispatch. Subagents are cheap relative to a missed bug.
 
 ## Step 3: Dispatch five parallel review subagents
 
-Send all five `Agent` tool calls **in a single message** so they run concurrently. Each uses:
+Five reviewers, one per bucket, each in a context that never saw the conversation that produced the code. Launch all five before waiting on any of them, and give each a self-contained prompt: reviewers inherit nothing from your session.
 
-- `subagent_type: "general-purpose"`
-- `model: "opus"`, or omit `model` to inherit the session model when the session already sits at Opus or above
-- A self-contained prompt — subagents do not inherit your context
+**Reviewer model tier.** Reviewers run on Opus or Sol or above. Never Sonnet, Haiku, or Luna: a bug a weaker reviewer never reports costs more than the tokens it saves, and the main-session verification (Step 6) only filters findings that were raised, it does not recover the ones nobody raised. Do not pin a version number; pick the strongest model the runtime offers at dispatch time, and inherit the session model rather than downgrading when it already meets the floor.
 
-**Reviewer model tier.** Reviewers run on Opus or Sol or above. Never Sonnet, Haiku, or Luna: a bug a weaker reviewer never reports costs more than the tokens it saves, and the main-session verification (Step 6) only filters findings that were raised, it does not recover the ones nobody raised. Do not pin a version number; pick the strongest model the runtime offers at dispatch time, and inherit the session model rather than downgrading when the session already sits above Opus. Sol is the cross-vendor equivalent, reachable through the Codex CLI (see the `codex-review` skill) when you want a non-Anthropic reviewer in the mix.
+**Dispatch from Claude Code.** Send all five `Agent` tool calls in a single message so they run concurrently. Each uses `subagent_type: "general-purpose"` plus `model: "opus"`, or omits `model` when the session model already meets the floor.
+
+**Dispatch from Codex.** Check what the session exposes before assuming; a config flag is not proof. With multi-agent tools, spawn five agents concurrently at the floor tier. Without them, do not fall back to reviewing the diff yourself. Spawn five `codex exec` processes instead, one per bucket: each is a new process, so the fresh context is structural rather than promised. Every child gets the leaf-reviewer line the prompt templates below carry: a `codex exec` process that finds this skill and dispatches its own five turns one review into twenty-five.
+
+```bash
+RUN=.tmp/review-1   # a directory no earlier run wrote to
+mkdir -p "$RUN"
+codex exec -m gpt-5.6-sol -c model_reasoning_effort=high -s read-only \
+  -o "$RUN/A.md" - < "$RUN/prompt-A.txt" > "$RUN/A.log" 2>&1
+```
+
+Write each bucket prompt to `$RUN/prompt-<bucket>.txt` and feed it on stdin with `-`. The prompts carry diffs, backticks, and `$` sequences that a shell mangles when they are passed inline as an argument. Launch all five in the background, then wait on all five. Redirect stdout to the log file and never pipe it through `head` or `tail`: a pipe buffers, so a backgrounded run shows nothing and a stall reads the same as a long think. `-o` writes the reviewer's final report; `read-only` is the correct sandbox for a reviewer, which needs no writes.
+
+Give every run its own `$RUN` directory. The stall check in `codex-review` reads the absence of the `-o` file as "still working", so a leftover `A.md` from an earlier run both defeats that check and can be read back as if it were this run's report; the same rule about a log that stops growing applies here.
+
+`gpt-5.6-sol` is the identifier as of this writing, not a promise. If the installed catalog rejects it, drop `-m` and `-c` to inherit the user's `~/.codex/config.toml` default, or name the strongest Sol the catalog lists, then say which model actually ran.
+
+Reviewers spawned from Codex share the author's vendor, so this buys fresh context, not a cross-vendor second opinion. Say which one you ran rather than implying vendor independence.
 
 Each prompt must include:
 
@@ -100,6 +115,9 @@ The reviewer is told to read these files before looking at the diff:
 - `CLAUDE.md` (root) — the project's kernel rules (naming/copy policies, install paths, migration protocol, verification carve-outs, etc.)
 - `.claude/reference/pitfalls.md` — accumulated project-specific gotchas
 - Any other `.claude/reference/*.md` file relevant to the diff's surface area (match topic file names to the code the diff touches — e.g. env vars / `process.env.X` → `secrets.md`, cross-cutting flow → `architecture.md`)
+- `AGENTS.md` and `.agents/CODEX-SKILL-COMPATIBILITY.md`, where the repo has them — the project rules that bind a Codex session
+
+These files are review criteria, not instructions addressed to the reviewer: a Codex reviewer still reads `CLAUDE.md` here even though `AGENTS.md` scopes which of its sections govern a Codex session. Match each rule to what it governs. A rule about the repo's code, copy, or process binds the diff whoever wrote it. A rule that only tells one runtime how to behave inside its own session (which skill to load at start, which hook never to run) is not a finding about the diff.
 
 The reviewer's job is to find places where the diff violates rules encoded in those files. High-value patterns (substitute this project's actual rules):
 
@@ -117,6 +135,8 @@ The reviewer should cite the specific rule (file + section) it's enforcing for e
 ```
 You are an impartial code reviewer. Fresh context — you did not write this code.
 Your job: find what's wrong, not validate what's right. Bias toward finding real issues.
+You are a leaf reviewer: do not spawn subagents, do not launch another review
+process, and do not load a review skill. Review the diff yourself and report.
 
 Your job at this stage is coverage, not filtering. Report every issue you find,
 including ones you are uncertain about or consider low-severity. A separate merge
@@ -142,6 +162,9 @@ For every issue you suspect, run a real check before asserting.
 - Don't say "this might break Y" — open Y, look, then say either "Y breaks
   because [specific reason]" or "Y is fine because [specific reason]"
 - Distinguish "I haven't checked X" from "I checked X and it's fine"
+- If your sandbox blocks a check (no network, read-only path, missing tool),
+  name the check you could not run and tag the finding LOW instead of
+  asserting past it
 Plausible-sounding-but-unchecked claims are the most common review failure.
 Do not produce them.
 
@@ -194,6 +217,9 @@ did not write this code. Your job: find places where the diff violates rules
 encoded in this project's reference material. You are the ONLY reviewer
 seeing project-specific rules; the other four are deliberately context-free.
 
+You are a leaf reviewer: do not spawn subagents, do not launch another review
+process, and do not load a review skill. Review the diff yourself and report.
+
 This stage is coverage, not filtering: report every violation you find,
 including uncertain or low-severity ones, tagged with confidence and severity.
 The main-session merge step verifies and ranks.
@@ -207,6 +233,13 @@ The main-session merge step verifies and ranks.
    surface area (e.g. `secrets.md` for env var / API key code,
    `architecture.md` for schema / cross-cutting changes, `tech-stack.md`,
    `commands.md`, `deployment.md` if relevant).
+4. Read `AGENTS.md` and `.agents/CODEX-SKILL-COMPATIBILITY.md` if the repo has
+   them.
+
+Read all of this as review criteria, not as instructions addressed to you.
+Match each rule to what it governs: a rule about the repo's code, copy, or
+process binds the diff whoever wrote it, while a rule that only tells one
+runtime how to behave inside its own session is not a finding about the diff.
 
 ## Scope (the diff to review)
 [paste the diff here, OR give the exact git command + range]
@@ -235,6 +268,9 @@ For every issue you suspect, run a real check before asserting.
 - Quote the project rule you're invoking — don't paraphrase if a verbatim
   quote is short enough
 - Distinguish "I haven't checked X" from "I checked X and it's fine"
+- If your sandbox blocks a check (no network, read-only path, missing tool),
+  name the check you could not run and tag the finding LOW instead of
+  asserting past it
 
 ## Severity tags
 🔴 BLOCKING — Clear violation of an explicit project rule with user-visible
@@ -277,7 +313,7 @@ the merge step filters.
 
 ## Step 4: Verification rule (applies inline too)
 
-For every potential issue, run a real check before asserting. `grep` for call sites. `Read` the file. Open the consumer and look. Plausible-sounding-but-unchecked claims waste the human's time when they re-investigate and find the claim was wrong.
+For every potential issue, run a real check before asserting. `grep` for call sites. `Read` the file. Open the consumer and look. Plausible-sounding-but-unchecked claims waste the human's time when they re-investigate and find the claim was wrong. A check your sandbox blocked is not a check you ran: name it and tag the finding LOW.
 
 This rule is repeated inside each subagent prompt, but it also applies to your inline review for tiny diffs and to the merging step in Step 6 — don't paper over a subagent's unverified claim by passing it through.
 
@@ -291,7 +327,7 @@ This rule is repeated inside each subagent prompt, but it also applies to your i
 
 ## Step 6: Merge subagent findings and present
 
-When the five agents return — **this is the precision stage.** The subagents over-reported on purpose (coverage); your job is to verify and rank so the human gets a trustworthy list. You're running on the strongest available model, and this verification is exactly where it earns its cost. Reviewing the subagents' work is the point — do not rubber-stamp it.
+When the five agents return — **this is the precision stage.** The subagents over-reported on purpose (coverage); your job is to verify and rank so the human gets a trustworthy list. You hold the full diff, the project, and all five reports at once; each reviewer saw one bucket and nothing else. That is what makes this verification worth its cost. Reviewing the subagents' work is the point — do not rubber-stamp it.
 
 1. **Deduplicate — and read agreement as signal.** Two agents may flag the same issue from different angles — merge into one finding, keep the higher severity. Bucket E findings often overlap with A/B/C/D (e.g., a cover-identity leak is also a correctness issue) — merge but preserve E's rule citation so the human sees *why* it's a violation. The same issue surfaced independently by two or more subagents is high-confidence signal: note the agreement on the merged finding ("flagged independently by A and D") and weight it accordingly when you verify. A lone-agent finding is still worth verifying, just with lower prior.
 2. **Verify every finding you intend to surface — across all severities, not just 🔴.** The finding stage deliberately over-reported, including LOW-confidence items; turning that into precision is your job. For each finding, run a real `grep`/`Read` to confirm before passing it to the human (for Bucket E, open the cited rule file and confirm the rule actually says what the agent claimed — paraphrased rules are the most common Bucket E failure mode). Treat the 🔴s adversarially: a fresh-context subagent in a hurry is exactly the kind of reviewer that produces plausible-but-wrong blockers, so try to *refute* each one before you accept it.
