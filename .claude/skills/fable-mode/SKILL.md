@@ -5,7 +5,7 @@ description: Use proactively for hard layered work with dependent steps, load-be
 
 # The Fable Method
 
-Fable 5's working discipline, written down so any model can run it. A skill file can't transfer
+The latest Fable model's working discipline, written down so any model can run it. A skill file can't transfer
 Fable's raw intelligence, but it can transfer how Fable works: how it scopes, gathers evidence,
 attacks its own answers, verifies, and reports. Run this loop on Opus or Sol or above
 and the output gets noticeably more Fable-like on planning, debugging, and review.
