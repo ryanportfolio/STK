@@ -25,6 +25,7 @@ Defaults until configured:
 - Never claim visual/UI verification you didn't actually perform.
 - Can't run the authoritative check → flag the risk plainly, don't claim it passes.
 - When verification must happen elsewhere (CI, deploy, user's machine) → say so and stop.
+- Browser per session, never shared. The desktop app's Browser pane (`mcp__Claude_Browser__*`, `preview_start`) is one Chrome per app: a second session or subagent gets "Another task's Chrome owns browser slot". The official playwright plugin is one persistent profile: the second connection gets "Browser is already in use ... use --isolated" and deadlocks. Parallel or subagent browser work uses `@playwright/mcp --isolated` (in-memory profile; copy `.mcp.json` from claude-starter).
 
 ## Core principles
 
