@@ -39,17 +39,6 @@
       setText("r-updated", data.generated_at.slice(0, 10));
     }
 
-    var clients = stk.clients;
-    if (clients) {
-      ["claude", "codex", "legacy"].forEach(function (client) {
-        setText("client-" + client, fmtBytes((clients[client] || {}).bytes_avoided || 0));
-      });
-    } else {
-      setText("client-claude", "Unattributed");
-      setText("client-codex", "Unattributed");
-      setText("client-legacy", fmtBytes(stk.bytes_avoided || 0));
-    }
-
     if (live) {
       setText("meter-number", String(stk.est_tokens || 0));
       setText("meter-state", "SNAPSHOT");

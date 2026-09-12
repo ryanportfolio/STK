@@ -20,7 +20,7 @@
   <span class="header-sub">SESSION TOKEN KILLER · REV 0.1.0</span>
   <nav aria-label="Sections">
     <a href="#meter">METER</a>
-    <a href="#mechanism">HOW IT WORKS</a>
+    <a href="#mechanism">READS</a>
     <a href="#install">INSTALL</a>
     <a href="https://savetokens.tips/">◂ SAVETOKENS.TIPS</a>
   </nav>
@@ -31,16 +31,18 @@
 
 <section class="band" aria-label="What STK is">
   <div class="band-inner">
-    <h1>Smaller file reads<br>Claude Code and Codex</h1>
-    <p class="section-body wide">STK turns large file reads into line-numbered outlines. Your agent fetches the parts it needs.</p>
+    <h1>STK</h1>
+    <p class="client-support">Claude Code + Codex</p>
+    <p class="hero-description">STK turns large file reads into line-numbered outlines<br>Your agent fetches the parts it needs</p>
   </div>
 </section>
 
 <!-- ============ HERO / LIVE METER ============ -->
 <section class="power-on" id="meter" aria-labelledby="meter-title">
+  <h2 id="meter-title" class="meter-heading">Meter</h2>
   <div class="hero-bezel" data-plate>
     <div class="bezel-row">
-      <p class="section-label" id="meter-title">CLAUDE CODE + CODEX · LOCAL TOTALS</p>
+      <p class="section-label">CLAUDE CODE + CODEX · LOCAL TOTALS</p>
       <span class="led" id="meter-led" aria-hidden="true"></span>
       <span class="meter-state" id="meter-state">STANDBY</span>
     </div>
@@ -68,7 +70,7 @@
     </div>
 
     <div class="caveat-plate">
-      <p class="caveat">Gross estimate: bytes avoided ÷ 4. Follow-up reads and overhead are excluded. <a href="#methodology">About the meter ↓</a></p>
+      <p class="caveat">Gross estimate: bytes avoided ÷ 4. Follow-up reads and overhead are excluded. <a href="https://github.com/ryanportfolio/STK/blob/main/docs/usage.md#honest-limitations">Methodology ↗</a></p>
     </div>
   </div>
 </section>
@@ -77,8 +79,7 @@
 
 <section class="channel" id="install" aria-labelledby="install-title">
   <div class="channel-head">
-    <p class="section-label">SETUP</p>
-    <h2 id="install-title">Install once, use both</h2>
+    <h2 id="install-title">Install</h2>
   </div>
   <div class="install-plate" data-plate>
 <pre class="terminal"><code>git clone https://github.com/ryanportfolio/STK.git
@@ -92,8 +93,7 @@ stk init --auto</code></pre>
 
 <section class="channel" id="mechanism" aria-labelledby="how-title">
   <div class="channel-head">
-    <p class="section-label">HOW IT WORKS</p>
-    <h2 id="how-title">Outline first, fetch a range</h2>
+    <h2 id="how-title">Reads</h2>
   </div>
   <div class="table-scroll">
     <table class="spec-table">
@@ -108,20 +108,7 @@ stk init --auto</code></pre>
   <p class="section-body wide">Default threshold: 16 KiB. Small files, scoped reads, binaries, and unsupported commands pass through. Repeat-read suppression applies to Claude Code only.</p>
 </section>
 
-<section class="channel" id="methodology" aria-labelledby="meth-title">
-  <div class="channel-head">
-    <p class="section-label">ACCOUNTING</p>
-    <h2 id="meth-title">One meter, both clients</h2>
-    <p class="section-body wide">Scheduled snapshots from the author's machine combine Claude Code and Codex hook events. Older records remain unattributed. Other users' data is never collected.</p>
-  </div>
-  <div class="client-totals" aria-label="Bytes avoided by client">
-    <p class="well well--field"><span>CLAUDE CODE</span><b id="client-claude">Pending</b></p>
-    <p class="well well--field"><span>CODEX</span><b id="client-codex">Pending</b></p>
-    <p class="well well--field"><span>LEGACY / UNATTRIBUTED</span><b id="client-legacy">Pending</b></p>
-  </div>
-  <p class="section-body wide">These are gross bytes avoided, not measured net token savings. Follow-up reads can reduce or erase the benefit. Standalone <code>stk read</code> calls are outside this meter.</p>
-  <p class="config-note"><a href="data/gain.json">Published data ↗</a> · <a href="https://github.com/ryanportfolio/STK/blob/main/docs/usage.md#honest-limitations">Methodology ↗</a> · <a href="https://github.com/ryanportfolio/STK/blob/main/docs/dual-client-verification.md">Runtime tests ↗</a></p>
-</section>
+
 
 <footer class="site-footer">
   <p>Also using <a href="https://github.com/rtk-ai/rtk">RTK</a>? Keep it for command output.</p>
