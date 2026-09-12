@@ -36,6 +36,7 @@ def main():
     parser.add_argument("--stk", required=True)
     parser.add_argument("--codex", default=shutil.which("codex"))
     parser.add_argument("--evidence", type=Path)
+    parser.add_argument("--installed-home", type=Path, help="Use existing Codex hooks and persisted trust; stats stay isolated")
     args = parser.parse_args()
     if not args.codex:
         parser.error("codex executable not found")
@@ -56,7 +57,8 @@ def main():
         env["CODEX_HOME"] = str(root / ".codex")
         env["STK_DATA_DIR"] = str(root / "data")
         env["STK_CONFIG_FILE"] = str(root / "stk-config.toml")
-        subprocess.run([str(executable), "init", "--codex", "--home", temp], env=env, check=True, capture_output=True)
+        if not args.installed_home:
+            subprocess.run([str(executable), "init", "--codex", "--home", temp], env=env, check=True, capture_output=True)
         command1 = "Get-Content -LiteralPath 'large file.rs'" if os.name == "nt" else "cat 'large file.rs'"
         exe_path = executable.as_posix().replace("'", "''" if os.name == "nt" else "'\"'\"'")
         command2 = ("& " if os.name == "nt" else "") + f"'{exe_path}' read 'large file.rs' --offset 2100 --limit 2"
@@ -118,10 +120,28 @@ apps = false
 multi_agent = false
 enable_request_compression = false
 ''', encoding="utf-8")
+        runtime_options = ["--dangerously-bypass-hook-trust"]
+        if args.installed_home:
+            env["CODEX_HOME"] = str(args.installed_home.resolve())
+            # Override the provider explicitly while retaining the real hook source
+            # and its persisted trust. Never write the installed configuration.
+            runtime_options = []
+            for key, value in {
+                "model_provider": "stk_fixture", "model": "stk-fixture", "notify": [],
+                "model_providers.stk_fixture.name": "STK local fixture",
+                "model_providers.stk_fixture.base_url": f"http://127.0.0.1:{server.server_port}/v1",
+                "model_providers.stk_fixture.wire_api": "responses",
+                "model_providers.stk_fixture.requires_openai_auth": False,
+                "model_providers.stk_fixture.request_max_retries": 0,
+                "model_providers.stk_fixture.stream_max_retries": 0,
+                "features.hooks": True, "features.apps": False,
+                "features.multi_agent": False, "features.enable_request_compression": False,
+            }.items():
+                runtime_options.extend(["-c", key + "=" + json.dumps(value)])
         try:
             result = subprocess.run([
                 args.codex, "exec", "--skip-git-repo-check", "--ephemeral",
-                "--dangerously-bypass-hook-trust", "--sandbox", "read-only",
+                *runtime_options, "--sandbox", "read-only",
                 "-c", 'windows.sandbox="unelevated"',
                 "-c", 'approval_policy="never"',
                 "-C", temp, "--json", "Run the local STK runtime fixture."
@@ -134,10 +154,12 @@ enable_request_compression = false
             server.shutdown()
             server.server_close()
         outputs = {item.get("call_id"): item.get("output") for request in requests for item in request.get("input", []) if item.get("type") == "function_call_output"}
-        evidence = {"codex_exit": result.returncode, "request_count": len(requests), "tool_outputs": outputs, "stdout": result.stdout, "stderr": result.stderr}
+        stats = json.loads(subprocess.check_output([str(executable), "gain", "--json"], env=env))
+        evidence = {"stats": stats, "persisted_trust": bool(args.installed_home), "codex_exit": result.returncode, "request_count": len(requests), "tool_outputs": outputs, "stdout": result.stdout, "stderr": result.stderr}
         if args.evidence:
             args.evidence.write_text(json.dumps(evidence, indent=2), encoding="utf-8")
         assert result.returncode == 0, result.stderr + result.stdout
+        assert stats["clients"]["codex"]["clamps"] == 1, stats
         first = json.dumps(outputs.get("call_1"))
         second = json.dumps(outputs.get("call_2"))
         assert "stk clamp:" in first, first + result.stderr

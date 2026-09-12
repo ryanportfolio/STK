@@ -1,9 +1,29 @@
 ﻿{
-    "generated_at":  "2026-09-12T22:19:07Z",
+    "generated_at":  "2026-09-12T23:13:32Z",
     "stk":  {
                 "bytes_avoided":  43967536,
-                "caveat":  "re-fetch follow-ups after a clamp are not measurable here; real savings are somewhat lower",
+                "caveat":  "gross bytes avoided, estimated at bytes/4; follow-up reads and overhead are excluded, so net token savings are unmeasured",
                 "clamps":  845,
+                "clients":  {
+                                "claude":  {
+                                               "bytes_avoided":  0,
+                                               "clamps":  0,
+                                               "dup_hits":  0,
+                                               "est_tokens":  0
+                                           },
+                                "codex":  {
+                                              "bytes_avoided":  0,
+                                              "clamps":  0,
+                                              "dup_hits":  0,
+                                              "est_tokens":  0
+                                          },
+                                "legacy":  {
+                                               "bytes_avoided":  43967536,
+                                               "clamps":  845,
+                                               "dup_hits":  351,
+                                               "est_tokens":  10991884
+                                           }
+                            },
                 "days":  [
                              {
                                  "bytes_avoided":  986753,
@@ -304,7 +324,7 @@
                 "est_tokens":  10991884
             },
     "rtk":  {
-                "commands":  170577,
+                "commands":  170630,
                 "tokens_saved":  "207.3M",
                 "reduction":  "59.1%",
                 "source":  "rtk gain (RTK\u0027s own accounting)"

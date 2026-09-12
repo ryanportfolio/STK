@@ -27,12 +27,17 @@ pub struct SessionRecord {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StatRecord {
+    /// Older records have no client attribution.
+    #[serde(default = "legacy_client")]
+    pub client: String,
     pub ts: u64,
     pub file: String,
     pub file_bytes: u64,
     pub sent_bytes: u64,
     pub kind: String, // "clamp" | "dup"
 }
+
+fn legacy_client() -> String { "legacy".into() }
 
 pub fn now_ts() -> u64 {
     SystemTime::now()
@@ -177,7 +182,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let store = Store::new(dir.path().to_path_buf());
         store
-            .record_stat(&StatRecord {
+            .record_stat(&StatRecord { client: "legacy".into(),
                 ts: 1,
                 file: "x".into(),
                 file_bytes: 1000,

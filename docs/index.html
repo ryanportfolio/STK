@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>STK · Session Token Killer</title>
-<meta name="description" content="A Claude Code hook that stops oversized file reads from flooding your context. Every number on this page was measured, and every number carries its caveat.">
+<meta name="description" content="Smaller file reads for Claude Code and Codex. One Rust binary, line-numbered outlines, and a shared usage meter.">
 <link rel="canonical" href="https://savetokens.tips/stk/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,9 +19,8 @@
   <a class="wordmark" href="#top">STK</a>
   <span class="header-sub">SESSION TOKEN KILLER · REV 0.1.0</span>
   <nav aria-label="Sections">
-    <a href="#measurement">CH1 · MEASUREMENT</a>
-    <a href="#mechanism">CH2 · MECHANISM</a>
-    <a href="#rtk">CH3 · SIBLING</a>
+    <a href="#meter">METER</a>
+    <a href="#mechanism">HOW IT WORKS</a>
     <a href="#install">INSTALL</a>
     <a href="https://savetokens.tips/">◂ SAVETOKENS.TIPS</a>
   </nav>
@@ -30,11 +29,18 @@
 
 <main id="top">
 
+<section class="band" aria-label="What STK is">
+  <div class="band-inner">
+    <h1>Smaller file reads<br>Claude Code and Codex</h1>
+    <p class="section-body wide">STK turns large file reads into line-numbered outlines. Your agent fetches the parts it needs.</p>
+  </div>
+</section>
+
 <!-- ============ HERO / LIVE METER ============ -->
 <section class="power-on" id="meter" aria-labelledby="meter-title">
   <div class="hero-bezel" data-plate>
     <div class="bezel-row">
-      <p class="section-label" id="meter-title">LIVE METER · AUTHOR'S MACHINE</p>
+      <p class="section-label" id="meter-title">CLAUDE CODE + CODEX · LOCAL TOTALS</p>
       <span class="led" id="meter-led" aria-hidden="true"></span>
       <span class="meter-state" id="meter-state">STANDBY</span>
     </div>
@@ -42,15 +48,15 @@
     <div class="hero-scope scope">
       <canvas class="burn" id="burn" aria-hidden="true"></canvas>
       <div class="hero-tagline-wrap">
-        <p class="hero-number"><b id="meter-number">0</b><span class="hero-unit" id="meter-unit">TOKENS KEPT OUT</span></p>
-        <p class="hero-sub" id="meter-sub">This counter is real and it is currently zero. It starts moving the first time the hook clamps a read.</p>
+        <p class="hero-number"><b id="meter-number">0</b><span class="hero-unit" id="meter-unit">EST. TOKENS AVOIDED</span></p>
+        <p class="hero-sub" id="meter-sub">Waiting for a published snapshot.</p>
       </div>
       <div class="spark" id="spark" aria-hidden="true"></div>
     </div>
 
     <div class="hero-readouts" role="list">
       <p class="well well--field" role="listitem"><span>CLAMPS</span><b id="r-clamps">0</b></p>
-      <p class="well well--field" role="listitem"><span>DUP HITS</span><b id="r-dups">0</b></p>
+      <p class="well well--field" role="listitem"><span>REPEAT READS</span><b id="r-dups">0</b></p>
       <p class="well well--field" role="listitem"><span>BYTES AVOIDED</span><b id="r-bytes">0</b></p>
       <p class="well well--field" role="listitem"><span>EST. TOKENS</span><b id="r-tokens">0</b></p>
       <p class="well well--field" role="listitem"><span>SNAPSHOT</span><b id="r-updated">—</b></p>
@@ -58,150 +64,67 @@
 
     <div class="hero-cta">
       <a class="cta-button" href="https://github.com/ryanportfolio/STK">Get STK on GitHub ▸</a>
-      <p class="cta-note">github.com/ryanportfolio/STK · MIT · one Rust binary, no runtime deps · <a href="#install">install ↓</a></p>
+      <p class="cta-note">MIT · One Rust binary · <a href="#install">install ↓</a></p>
     </div>
 
     <div class="caveat-plate">
-      <p class="caveat"><b>UPPER BOUND, NOT A NET.</b> <a href="#methodology">Full methodology ↓</a></p>
+      <p class="caveat">Gross estimate: bytes avoided ÷ 4. Follow-up reads and overhead are excluded. <a href="#methodology">About the meter ↓</a></p>
     </div>
   </div>
 </section>
 
-<!-- ============ PITCH ============ -->
-<section class="band" aria-label="What STK is">
-  <div class="band-inner">
-    <h1>A Claude&nbsp;Code hook that stops oversized file reads from flooding your context.</h1>
-    <p class="section-body wide">One Rust binary, wired in as a <code>PreToolUse</code> hook on the native <code>Read</code> tool. Big file → the agent gets a ~2&nbsp;KB line-numbered outline instead of the full dump, plus exact instructions to fetch any range with <code>Read(offset, limit)</code>. Small files, scoped reads, binaries, anything STK can't analyze: all pass through untouched.</p>
-  </div>
-</section>
 
-<!-- ============ CH1 MEASUREMENT ============ -->
-<section class="channel" id="measurement" aria-labelledby="ch1-title">
-  <div class="channel-head">
-    <p class="section-label">CH1 · THE MEASUREMENT</p>
-    <h2 id="ch1-title">We looked before we built</h2>
-    <p class="section-body">Mined 250+ Claude&nbsp;Code sessions (27.8&nbsp;MB of tool output across 24,597 tool results) to find where the tokens actually go:</p>
-  </div>
 
-  <div class="stat-grid">
-    <div class="stat-plate" data-plate>
-      <p class="stat-big">38.6<span class="stat-unit">%</span></p>
-      <p class="stat-caption">of ALL tool-result bytes sat in oversized (&gt;8&nbsp;KB) results: 10.7&nbsp;MB carried by just 590 results. 2.4% of results held 38.6% of the bytes.</p>
-    </div>
-    <div class="stat-plate stat-plate--hot" data-plate>
-      <p class="stat-big">85<span class="stat-unit">%</span></p>
-      <p class="stat-caption">of that oversized mass came from ONE source: the native <code>Read</code> tool. 9.1&nbsp;MB, vs 1.0&nbsp;MB from Bash. RTK's shell hook can never see it. This number is the whole reason STK exists.</p>
-    </div>
-  </div>
-
-  <div class="bar-viz" role="img" aria-label="Oversized tool-result bytes by source: Read tool 9.1 megabytes, Bash 1.0 megabytes, other 0.6 megabytes">
-    <div class="bar-row"><span class="bar-label">READ</span><span class="bar-track"><span class="bar-fill" style="--w:85%"></span></span><span class="bar-val">9.1 MB</span></div>
-    <div class="bar-row"><span class="bar-label">BASH</span><span class="bar-track"><span class="bar-fill bar-fill--dim" style="--w:9.3%"></span></span><span class="bar-val">1.0 MB</span></div>
-    <div class="bar-row"><span class="bar-label">OTHER</span><span class="bar-track"><span class="bar-fill bar-fill--dim" style="--w:5.6%"></span></span><span class="bar-val">0.6 MB</span></div>
-    <p class="bar-note">Oversized (&gt;8 KB) tool-result bytes by source, 250 sessions.</p>
-  </div>
-</section>
-
-<!-- ============ CH2 MECHANISM ============ -->
-<section class="channel" id="mechanism" aria-labelledby="ch2-title">
-  <div class="channel-head">
-    <p class="section-label">CH2 · THE MECHANISM</p>
-    <h2 id="ch2-title">The narrowest tool that closes the gap</h2>
-    <p class="section-body">Decision in under 10&nbsp;ms, in order. The first rule that matches wins. Everything STK doesn't understand passes through. It never blocks a read it can't analyze.</p>
-  </div>
-
-  <ol class="matrix" aria-label="Decision matrix">
-    <li><span class="m-cond">Read already has <code>offset</code>/<code>limit</code></span><span class="m-arrow">→</span><span class="m-act m-allow">ALLOW</span><span class="m-why">never fight a targeted read</span></li>
-    <li><span class="m-cond">File missing / unreadable</span><span class="m-arrow">→</span><span class="m-act m-allow">ALLOW</span><span class="m-why">let Read produce its own error</span></li>
-    <li><span class="m-cond">Binary, image, PDF, notebook</span><span class="m-arrow">→</span><span class="m-act m-allow">ALLOW</span><span class="m-why">nothing to outline</span></li>
-    <li><span class="m-cond">≤ 16 KB</span><span class="m-arrow">→</span><span class="m-act m-allow">ALLOW</span><span class="m-why">small files were never the problem</span></li>
-    <li><span class="m-cond">Same file, same hash, this session</span><span class="m-arrow">→</span><span class="m-act m-deny">DENY</span><span class="m-why">one-line “unchanged” note, not a 50 KB re-dump</span></li>
-    <li><span class="m-cond">Big file, first sight</span><span class="m-arrow">→</span><span class="m-act m-deny">DENY</span><span class="m-why">outline instead (the payload below)</span></li>
-  </ol>
-
-  <div class="outline-demo" data-plate>
-    <p class="demo-caption">What the model sees instead of 84 KB of source:</p>
-<pre class="terminal"><code>stk clamp: src/pipeline.ts — 84.3 KB, 2140 lines (threshold 16 KB).
-Outline below; fetch only what you need with Read(file_path, offset, limit).
-
-   1  import { … } (12 import lines)
-  40  export interface Config
-  92  export class Pipeline
- 118    constructor(opts: PipelineOpts)
- 143    async run(input: Stream): Promise&lt;Result&gt;
- 402    private flush()
- ...
-2101  export function main()
-
-Re-read a symbol's body: Read with offset=&lt;line&gt;, limit=&lt;span&gt;.</code></pre>
-    <p class="demo-note">The shape of an 84 KB file for ~2 KB. Nothing is lost: the agent re-reads any range on demand.</p>
-  </div>
-</section>
-
-<!-- ============ CH3 RTK SIBLING ============ -->
-<section class="channel" id="rtk" aria-labelledby="ch3-title">
-  <div class="channel-head">
-    <p class="section-label">CH3 · THE SIBLING</p>
-    <h2 id="ch3-title">Two meters, two streams</h2>
-    <p class="section-body">STK is the sibling of <a href="https://github.com/rtk-ai/rtk">RTK (Rust Token Killer)</a>. Together they cover the two fattest input streams an agent pays for.</p>
-  </div>
-
-  <div class="rtk-grid">
-    <div class="table-scroll">
-      <table class="spec-table">
-        <caption class="visually-hidden">RTK versus STK</caption>
-        <thead><tr><th></th><th>RTK</th><th>STK</th></tr></thead>
-        <tbody>
-          <tr><th>Scope</th><td>Shell command output</td><td><code>Read</code> tool output</td></tr>
-          <tr><th>Unit</th><td>Per command</td><td>Per session</td></tr>
-          <tr><th>Mechanism</th><td>Filter &amp; compress</td><td>Outline &amp; clamp</td></tr>
-          <tr><th>Loss</th><td>Lossless (strips decor)</td><td>Lossy but recoverable (re-read on demand)</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="rtk-meter" data-plate>
-      <p class="section-label">RTK · AUTHOR'S LIFETIME METER</p>
-      <div class="hero-readouts">
-        <p class="well well--field"><span>COMMANDS</span><b id="rtk-cmds">170,577</b></p>
-        <p class="well well--field"><span>TOKENS SAVED</span><b id="rtk-saved">207.3M</b></p>
-        <p class="well well--field"><span>REDUCTION</span><b id="rtk-pct">59.1%</b></p>
-      </div>
-      <p class="caveat">RTK's own accounting, from <code>rtk gain</code> on the author's machine, reported here as-is. Not measured by us.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ============ METHODOLOGY ============ -->
-<section class="channel" id="methodology" aria-labelledby="meth-title">
-  <div class="channel-head">
-    <p class="section-label">CALIBRATION · METHODOLOGY</p>
-    <h2 id="meth-title">How the meter is wired</h2>
-  </div>
-  <ol class="meth-list">
-    <li><b>Source of truth:</b> an append-only JSONL at <code>%LOCALAPPDATA%\stk\stats.jsonl</code>. One record per clamp or dedup hit, with <code>file_bytes</code> and <code>sent_bytes</code>.</li>
-    <li><b>Aggregation:</b> <code>stk gain --json</code> emits totals plus a per-day series. <code>bytes_avoided</code> = <code>file_bytes − outline_bytes</code> per clamp. <code>est_tokens</code> = bytes ÷ 4. The divisor is an estimate and we say so.</li>
-    <li><b>Publication:</b> a scheduled job on the author's machine runs <code>stk gain --json</code> and commits the snapshot into <a href="https://github.com/ryanportfolio/STK/blob/main/docs/data/gain.json">this repo</a>. This page renders that file. No server, no credentials. “Live” means daily granularity, the granularity the data has.</li>
-    <li><b>The caveat, again:</b> after a clamp, follow-up range reads cost tokens the hook can't see. The counter is an upper bound. Under-claiming is the brand.</li>
-    <li><b>Everything is auditable:</b> the decision matrix, outline formats, store layout, and fail-open contract live in <a href="https://github.com/ryanportfolio/STK/blob/main/SPEC.md">SPEC.md</a>, in the same repo as this page.</li>
-  </ol>
-</section>
-
-<!-- ============ INSTALL ============ -->
 <section class="channel" id="install" aria-labelledby="install-title">
   <div class="channel-head">
-    <p class="section-label">TRANSMIT · INSTALL</p>
-    <h2 id="install-title">Single binary, no runtime deps</h2>
+    <p class="section-label">SETUP</p>
+    <h2 id="install-title">Install once, use both</h2>
   </div>
   <div class="install-plate" data-plate>
-<pre class="terminal"><code>cargo install --path .   # build the binary
-stk init                 # prints the PreToolUse snippet</code></pre>
-    <p class="section-body wide"><code>stk init</code> prints the exact hook block to paste into <code>~/.claude/settings.json</code>. <b>STK never edits your settings for you.</b> You paste it, so you stay in control of what runs in your agent. Verify with <code>echo {} | stk hook claude</code>: prints nothing, exits 0.</p>
-    <p class="config-note">Tunables (all optional): <code>clamp_threshold</code> · <code>outline_max_lines</code> · <code>dedup</code> · <code>exclude</code> globs. Details in the <a href="https://github.com/ryanportfolio/STK#configuration">README</a>.</p>
+<pre class="terminal"><code>git clone https://github.com/ryanportfolio/STK.git
+cd STK
+cargo install --path .
+stk init --auto</code></pre>
+    <p class="section-body wide">Requires Rust. Setup detects installed clients, preserves other settings, and creates backups. In Codex, open <code>/hooks</code> to review and trust STK. Start a new session after setup.</p>
+    <p class="config-note"><a href="https://github.com/ryanportfolio/STK/blob/main/docs/usage.md">Configuration and commands ↗</a></p>
   </div>
+</section>
+
+<section class="channel" id="mechanism" aria-labelledby="how-title">
+  <div class="channel-head">
+    <p class="section-label">HOW IT WORKS</p>
+    <h2 id="how-title">Outline first, fetch a range</h2>
+  </div>
+  <div class="table-scroll">
+    <table class="spec-table">
+      <caption class="visually-hidden">Supported file reads</caption>
+      <thead><tr><th>Client</th><th>Intercepts</th><th>Follow-up</th></tr></thead>
+      <tbody>
+        <tr><th>Claude Code</th><td>Native <code>Read</code></td><td><code>Read</code> with offset and limit</td></tr>
+        <tr><th>Codex</th><td>Simple <code>cat</code>, <code>Get-Content</code>, <code>rtk read</code> commands</td><td><code>stk read</code> with offset and limit</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="section-body wide">Default threshold: 16 KiB. Small files, scoped reads, binaries, and unsupported commands pass through. Repeat-read suppression applies to Claude Code only.</p>
+</section>
+
+<section class="channel" id="methodology" aria-labelledby="meth-title">
+  <div class="channel-head">
+    <p class="section-label">ACCOUNTING</p>
+    <h2 id="meth-title">One meter, both clients</h2>
+    <p class="section-body wide">Scheduled snapshots from the author's machine combine Claude Code and Codex hook events. Older records remain unattributed. Other users' data is never collected.</p>
+  </div>
+  <div class="client-totals" aria-label="Bytes avoided by client">
+    <p class="well well--field"><span>CLAUDE CODE</span><b id="client-claude">Pending</b></p>
+    <p class="well well--field"><span>CODEX</span><b id="client-codex">Pending</b></p>
+    <p class="well well--field"><span>LEGACY / UNATTRIBUTED</span><b id="client-legacy">Pending</b></p>
+  </div>
+  <p class="section-body wide">These are gross bytes avoided, not measured net token savings. Follow-up reads can reduce or erase the benefit. Standalone <code>stk read</code> calls are outside this meter.</p>
+  <p class="config-note"><a href="data/gain.json">Published data ↗</a> · <a href="https://github.com/ryanportfolio/STK/blob/main/docs/usage.md#honest-limitations">Methodology ↗</a> · <a href="https://github.com/ryanportfolio/STK/blob/main/docs/dual-client-verification.md">Runtime tests ↗</a></p>
 </section>
 
 <footer class="site-footer">
+  <p>Also using <a href="https://github.com/rtk-ai/rtk">RTK</a>? Keep it for command output.</p>
   <p>STK · <a href="https://github.com/ryanportfolio/STK">github.com/ryanportfolio/STK</a> · MIT © ryanportfolio</p>
 </footer>
 

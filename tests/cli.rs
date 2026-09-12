@@ -36,6 +36,46 @@ fn success(output: &Output) {
 }
 
 #[test]
+fn client_totals_include_both_hooks_and_preserve_legacy_records() {
+    let dir = testutil::tempdir().unwrap();
+    let root = dir.path();
+    fs::create_dir(root.join("data")).unwrap();
+    fs::write(root.join("data/stats.jsonl"), concat!(
+        "{\"ts\":1784592000,\"file\":\"old\",\"file_bytes\":1000,\"sent_bytes\":100,\"kind\":\"clamp\"}\n",
+        "{\"ts\":1784592000,\"client\":\"future\",\"file\":\"other\",\"file_bytes\":100,\"sent_bytes\":150,\"kind\":\"dup\"}\n"
+    )).unwrap();
+    let path = root.join("large.txt");
+    fs::write(&path, "some content for a large file\n".repeat(1500)).unwrap();
+    for client in ["claude", "codex"] {
+        let event = if client == "claude" {
+            json!({"tool_name":"Read", "session_id":"stats", "tool_input":{"file_path":path}})
+        } else {
+            json!({"tool_name":"Bash", "session_id":"stats", "hook_event_name":"PreToolUse", "cwd":root,
+                "tool_input":{"command":"Get-Content large.txt"}})
+        };
+        success(&run(root, &["hook", client], Some(&event)));
+    }
+    let output = run(root, &["gain", "--json"], None);
+    success(&output);
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["clamps"], 3);
+    assert_eq!(report["dup_hits"], 1);
+    for client in ["claude", "codex", "legacy"] {
+        assert_eq!(report["clients"][client]["clamps"], 1);
+    }
+    assert_eq!(report["clients"]["legacy"]["bytes_avoided"], 900);
+    assert_eq!(report["clients"]["legacy"]["dup_hits"], 1);
+    let total: u64 = report["clients"].as_object().unwrap().values()
+        .map(|c| c["bytes_avoided"].as_u64().unwrap()).sum();
+    assert_eq!(report["bytes_avoided"], total);
+    assert_eq!(report["est_tokens"], total / 4);
+    let daily: u64 = report["days"].as_array().unwrap().iter()
+        .map(|d| d["bytes_avoided"].as_u64().unwrap()).sum();
+    assert_eq!(daily, total);
+    assert!(!String::from_utf8_lossy(&output.stdout).contains("large.txt"));
+}
+
+#[test]
 fn both_hooks_and_range_recovery_in_real_processes() {
     let dir = testutil::tempdir().unwrap();
     let root = dir.path();

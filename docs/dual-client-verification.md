@@ -1,5 +1,22 @@
 # Dual-client verification
 
+## Client accounting and site update
+
+Verified on Windows on 2026-09-12:
+
+- 41 unit tests and 5 CLI integration tests pass, including mixed Claude, Codex,
+  and legacy records, aggregate reconciliation, and backward-compatible parsing.
+- `scripts/test-publisher.ps1` preserves all three client buckets through the
+  production snapshot writer. Its test data stays in a temporary store.
+- `scripts/test-site.mjs` checks mixed-client, legacy, zero, and failed-fetch states.
+- The actual installed Codex hook passes `scripts/test-codex-runtime.py` with
+  `--installed-home`: persisted trust, no hook-trust bypass, local provider,
+  exact range retrieval, and one tagged Codex clamp in an isolated store.
+- The page renders without horizontal overflow at 1440px and 390px. New statistics
+  are attributed by client; older records remain legacy/unattributed.
+
+These checks verify collection and publication plumbing, not net session savings.
+
 Verified on Windows on 2026-09-12 with Codex CLI 0.154.0, Claude Code 2.1.268,
 and Rust 1.96.1. The same optimized STK executable passed both runtime tests.
 

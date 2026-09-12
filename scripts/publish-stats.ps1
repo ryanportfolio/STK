@@ -10,9 +10,18 @@
 # Safe to run by hand. Commits only docs/data/gain.json and docs/index.html,
 # only when they changed.
 
+param(
+    [switch]$SnapshotOnly,
+    [string]$OutputPath
+)
+
 $ErrorActionPreference = "Stop"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $OutFile = Join-Path $RepoRoot "docs\data\gain.json"
+if ($SnapshotOnly) {
+    if (-not $OutputPath) { throw "-SnapshotOnly requires -OutputPath" }
+    $OutFile = [System.IO.Path]::GetFullPath($OutputPath)
+} elseif ($OutputPath) { throw "-OutputPath requires -SnapshotOnly" }
 
 function Invoke-Git {
     param(
@@ -29,6 +38,7 @@ function Invoke-Git {
 
 Push-Location $RepoRoot
 try {
+    if (-not $SnapshotOnly) {
     # Pull remote changes before generating data. If a push loses a race, the
     # next run rebases the unpublished snapshot and retries automatically.
     $branch = (Invoke-Git -GitArgs @("branch", "--show-current") | Out-String).Trim()
@@ -43,6 +53,7 @@ try {
 
     Invoke-Git -GitArgs @("fetch", "origin", "main") | Out-Host
     Invoke-Git -GitArgs @("rebase", "origin/main") | Out-Host
+    }
 
     # --- STK: the authoritative JSON contract ---
     # Scheduled tasks often run without the user's PATH; fall back to the install path.
@@ -53,6 +64,9 @@ try {
     $stkRaw = & $stkExe gain --json
     if ($LASTEXITCODE -ne 0) { throw "stk gain --json failed (exit $LASTEXITCODE)" }
     $stk = $stkRaw | ConvertFrom-Json
+    if (-not $stk.clients -or $null -eq $stk.clients.codex -or $null -eq $stk.clients.claude) {
+        throw "STK lacks client accounting; upgrade the installed binary before publishing"
+    }
 
     # --- RTK: parse its human output; labeled on the site as RTK's own accounting ---
     $rtk = $null
@@ -82,6 +96,10 @@ try {
     New-Item -ItemType Directory -Force -Path (Split-Path $OutFile) | Out-Null
     $json = $snapshot | ConvertTo-Json -Depth 6
     Set-Content -Path $OutFile -Value $json -Encoding UTF8
+    if ($SnapshotOnly) {
+        Write-Host "Snapshot written to $OutFile (no Git changes or publication)."
+        return
+    }
 
     # --- keep the static RTK fallback numbers in index.html fresh ---
     # app.js overwrites these from gain.json, but the baked HTML is what shows

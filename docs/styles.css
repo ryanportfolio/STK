@@ -621,3 +621,8 @@ h2 {
   html { scroll-behavior: auto; }
   .led { animation: none; }
 }
+
+/* Client totals stay readable on narrow screens. */
+.client-totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.8rem; margin-bottom: 1rem; }
+.client-totals .well { padding: 1rem; }
+@media (max-width: 600px) { .client-totals { grid-template-columns: 1fr; } }
