@@ -78,6 +78,8 @@ exclude           = ["*.lock"] # globs that always pass through untouched
 
 ## Honest limitations
 
+Both hooks write to the same local stats store. `stk gain --json` includes combined totals and `clients.claude`, `clients.codex`, and `clients.legacy` totals. Older records without client tags remain unattributed; they are never reassigned. The site publisher uses this JSON directly.
+
 STK reports **bytes avoided**: the file bytes it kept out of context minus the small outline it sent. That number is real, but read it as an **upper bound**. Here is what it does not capture:
 
 - Net session savings remain unmeasured. Follow-up reads cost tokens and can reduce or erase the bytes avoided.

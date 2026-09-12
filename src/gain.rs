@@ -51,12 +51,26 @@ pub fn report_json(store: &Store) -> String {
     }
     days.sort_by(|a, b| a.0.cmp(&b.0));
 
+    let clients: serde_json::Map<String, serde_json::Value> = ["claude", "codex", "legacy"].iter().map(|client| {
+        let rows: Vec<_> = stats.iter().filter(|s| match s.client.as_str() {
+            "claude" | "codex" => s.client == *client,
+            _ => *client == "legacy",
+        }).collect();
+        let bytes: u64 = rows.iter().map(|s| s.file_bytes.saturating_sub(s.sent_bytes)).sum();
+        ((*client).to_string(), json!({
+            "clamps": rows.iter().filter(|s| s.kind == "clamp").count(),
+            "dup_hits": rows.iter().filter(|s| s.kind == "dup").count(),
+            "bytes_avoided": bytes, "est_tokens": bytes / 4,
+        }))
+    }).collect();
+
     json!({
+        "clients": clients,
         "clamps": clamps,
         "dup_hits": dups,
         "bytes_avoided": bytes_avoided,
         "est_tokens": bytes_avoided / 4,
-        "caveat": "re-fetch follow-ups after a clamp are not measurable here; real savings are somewhat lower",
+        "caveat": "gross bytes avoided, estimated at bytes/4; follow-up reads and overhead are excluded, so net token savings are unmeasured",
         "days": days.iter().map(|(date, c, du, b)| json!({
             "date": date, "clamps": c, "dup_hits": du, "bytes_avoided": b
         })).collect::<Vec<_>>(),
@@ -75,7 +89,7 @@ pub fn report(store: &Store) -> String {
     let est_tokens = bytes_avoided / 4;
 
     format!(
-        "stk gain\n--------\nclamps:        {clamps}\ndup hits:      {dups}\nbytes avoided: {bytes_avoided}\nest. tokens:   {est_tokens} (bytes/4)\n\nCaveat: re-fetch follow-ups (extra scoped Reads after a clamp) are not\nmeasurable from here; real savings are somewhat lower than the raw number."
+        "stk gain\n--------\nclamps:        {clamps}\ndup hits:      {dups}\nbytes avoided: {bytes_avoided}\nest. tokens:   {est_tokens} (bytes/4)\n\nCaveat: re-fetch follow-ups (extra scoped Reads after a clamp) are not\nmeasurable from here; net token savings are unmeasured."
     )
 }
 
@@ -90,10 +104,10 @@ mod tests {
         let dir = tempdir().unwrap();
         let store = Store::new(dir.path().to_path_buf());
         store
-            .record_stat(&StatRecord { ts: 1, file: "a".into(), file_bytes: 10000, sent_bytes: 2000, kind: "clamp".into() })
+            .record_stat(&StatRecord { client: "legacy".into(), ts: 1, file: "a".into(), file_bytes: 10000, sent_bytes: 2000, kind: "clamp".into() })
             .unwrap();
         store
-            .record_stat(&StatRecord { ts: 2, file: "a".into(), file_bytes: 10000, sent_bytes: 150, kind: "dup".into() })
+            .record_stat(&StatRecord { client: "legacy".into(), ts: 2, file: "a".into(), file_bytes: 10000, sent_bytes: 150, kind: "dup".into() })
             .unwrap();
         let out = report(&store);
         assert!(out.contains("clamps:        1"));
@@ -109,10 +123,10 @@ mod tests {
         let store = Store::new(dir.path().to_path_buf());
         // 2026-07-21 00:00:00 UTC = 1784592000
         store
-            .record_stat(&StatRecord { ts: 1_784_592_000, file: "a".into(), file_bytes: 10_000, sent_bytes: 2_000, kind: "clamp".into() })
+            .record_stat(&StatRecord { client: "legacy".into(), ts: 1_784_592_000, file: "a".into(), file_bytes: 10_000, sent_bytes: 2_000, kind: "clamp".into() })
             .unwrap();
         store
-            .record_stat(&StatRecord { ts: 1_784_592_100, file: "a".into(), file_bytes: 10_000, sent_bytes: 150, kind: "dup".into() })
+            .record_stat(&StatRecord { client: "legacy".into(), ts: 1_784_592_100, file: "a".into(), file_bytes: 10_000, sent_bytes: 150, kind: "dup".into() })
             .unwrap();
         let v: serde_json::Value = serde_json::from_str(&report_json(&store)).unwrap();
         assert_eq!(v["clamps"], 1);

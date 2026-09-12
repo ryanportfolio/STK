@@ -135,6 +135,7 @@ pub fn decide_for(raw_input: &str, config: &Config, store_root: PathBuf, codex: 
                 },
             );
             let _ = store.record_stat(&StatRecord {
+                client: if codex { "codex" } else { "claude" }.into(),
                 ts: store::now_ts(),
                 file: file_path.clone(),
                 file_bytes: size,
@@ -170,6 +171,7 @@ pub fn decide_for(raw_input: &str, config: &Config, store_root: PathBuf, codex: 
         },
     );
     let _ = store.record_stat(&StatRecord {
+                client: if codex { "codex" } else { "claude" }.into(),
         ts: store::now_ts(),
         file: file_path,
         file_bytes: size,

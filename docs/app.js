@@ -1,5 +1,5 @@
 /* Renders docs/data/gain.json (a committed snapshot of `stk gain --json`,
-   plus RTK numbers and a timestamp) into the meter. Static fallback in the
+   with a timestamp) into the meter. Static fallback in the
    HTML is the cold-start state, so a failed fetch degrades gracefully. */
 (function () {
   "use strict";
@@ -39,15 +39,28 @@
       setText("r-updated", data.generated_at.slice(0, 10));
     }
 
+    var clients = stk.clients;
+    if (clients) {
+      ["claude", "codex", "legacy"].forEach(function (client) {
+        setText("client-" + client, fmtBytes((clients[client] || {}).bytes_avoided || 0));
+      });
+    } else {
+      setText("client-claude", "Unattributed");
+      setText("client-codex", "Unattributed");
+      setText("client-legacy", fmtBytes(stk.bytes_avoided || 0));
+    }
+
     if (live) {
       setText("meter-number", String(stk.est_tokens || 0));
-      setText("meter-state", "LIVE");
+      setText("meter-state", "SNAPSHOT");
       var sub = document.getElementById("meter-sub");
       if (sub) sub.hidden = true;
       var led = document.getElementById("meter-led");
       if (led) led.classList.add("is-live");
       var state = document.getElementById("meter-state");
       if (state) state.classList.add("is-live");
+    } else {
+      setText("meter-sub", "Snapshot loaded. No clamps or repeat reads yet.");
     }
 
     // per-day sparkline: bytes_avoided per day, last 60 days present in data
@@ -100,12 +113,6 @@
       }
     }
 
-    var rtk = data.rtk;
-    if (rtk) {
-      if (rtk.commands != null) setText("rtk-cmds", fmt(rtk.commands));
-      if (rtk.tokens_saved != null) setText("rtk-saved", rtk.tokens_saved);
-      if (rtk.reduction != null) setText("rtk-pct", rtk.reduction);
-    }
   }
 
   fetch("data/gain.json", { cache: "no-cache" })

@@ -18,6 +18,7 @@ jobs:
         with:
           node-version: '22'
       - run: node scripts/readme/build.mjs --check
+      - run: node scripts/test-site.mjs
 
   rust:
     name: Rust tests (Windows)
@@ -30,3 +31,4 @@ jobs:
       - run: cargo test --locked
       - run: cargo clippy --locked --all-targets -- -D warnings
       - run: cargo build --locked --release
+      - run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-publisher.ps1 -StkDirectory target/release
