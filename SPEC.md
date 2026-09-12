@@ -5,6 +5,35 @@ fattest remaining context stream: the native `Read` tool. Measured on 250 real C
 sessions: 85% of oversized (>8KB) tool-result bytes came from `Read` (9.1MB of 10.7MB),
 which RTK's Bash hook can never see.
 
+## Dual-client support
+
+One binary exposes `stk hook claude`, `stk hook codex`, and `stk read`.
+The Claude decision matrix below remains unchanged. Codex adapts literal
+whole-file shell reads into the same engine, using shell-appropriate recovery
+instructions. It accepts `PreToolUse` events with `tool_name: "Bash"` and
+`tool_input.command`, resolves relative paths against the event's absolute
+`cwd`, and canonicalizes existing file paths.
+
+Recognized commands are single-file `cat`, `rtk read`, and `Get-Content`
+(with optional `-Path`, `-LiteralPath`, or `-Raw`). Interpolation, operators,
+provider paths, drive-relative paths, globs, multiple paths, and unsupported
+flags pass through. The hook never runs a shell command to resolve its input.
+
+Codex disables hash-based dedup because subagents can share session IDs and
+compaction can remove previous context. Its records use a `codex-` session
+prefix; stats remain shared. Direct `stk read` calls do not record savings.
+Explicit offsets are 1-based; either range flag bypasses outlining and returns
+file bytes for the selected lines, preserving original line endings.
+
+`stk init --auto` configures clients with existing settings directories;
+`--claude` and `--codex` explicitly select clients. It honors client directory
+environment overrides and supports `--home`, `--dry-run`, and `--uninstall`.
+Setup validates selected JSON files before writing, preserves unrelated
+handlers, backs up existing files, and replaces changed files through a
+same-directory temporary file. It emits both `command` and `commandWindows`.
+Codex hook trust remains a separate client-managed step. Bare `stk init`
+continues to print the legacy Claude snippet without writing settings.
+
 ## Mechanism
 
 Claude Code `PreToolUse` hook matched on `Read`. The hook receives JSON on stdin:

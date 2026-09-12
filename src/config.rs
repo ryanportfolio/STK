@@ -40,6 +40,9 @@ impl Default for Config {
 impl Config {
     /// Path of the config file (may not exist).
     pub fn path() -> Option<PathBuf> {
+        if let Some(path) = std::env::var_os("STK_CONFIG_FILE").filter(|p| !p.is_empty()) {
+            return Some(PathBuf::from(path));
+        }
         dirs::config_dir().map(|d| d.join("stk").join("config.toml"))
     }
 
