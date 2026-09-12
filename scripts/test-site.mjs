@@ -33,6 +33,8 @@ assert.equal(legacy('client-legacy'), '1.0 KB');
 const empty = await render({ stk: { clients: {} } });
 assert.equal(empty('client-codex'), '0 B');
 assert.equal(empty('meter-state'), 'STANDBY');
+assert.equal(empty('meter-sub'), 'Snapshot loaded. No clamps or repeat reads yet.');
 const failed = await render(null);
 assert.equal(failed('meter-state'), 'STANDBY');
+assert.equal(failed('meter-sub'), 'Waiting for a published snapshot.');
 console.log('PASS: mixed-client, legacy, zero, and failed-fetch site states; setup and anchors');
