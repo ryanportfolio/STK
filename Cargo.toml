@@ -2,10 +2,10 @@
 name = "stk"
 version = "0.1.0"
 edition = "2021"
-description = "Session Token Killer - Claude Code PreToolUse hook that clamps oversized Read tool results"
+description = "Session Token Killer - compact file reads for Claude Code and Codex"
 repository = "https://github.com/ryanportfolio/STK"
 readme = "README.md"
-keywords = ["claude-code", "tokens", "llm", "hook", "cli"]
+keywords = ["claude-code", "codex", "llm", "hook", "cli"]
 categories = ["command-line-utilities", "development-tools"]
 license = "MIT"
 

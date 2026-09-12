@@ -40,11 +40,16 @@ pub fn is_image_pdf_or_notebook(path: &str) -> bool {
 
 /// Full deny payload: header + entries (capped) + footer.
 pub fn generate(path: &str, content: &str, file_bytes: u64, threshold: u64, max_lines: usize) -> String {
+    generate_for(path, content, file_bytes, threshold, max_lines, false)
+}
+
+pub fn generate_for(path: &str, content: &str, file_bytes: u64, threshold: u64, max_lines: usize, codex: bool) -> String {
     let total_lines = content.lines().count();
     let kb = file_bytes as f64 / 1024.0;
     let threshold_kb = threshold as f64 / 1024.0;
+    let retrieval = if codex { "stk read with --offset and --limit" } else { "Read(file_path, offset, limit)" };
     let header = format!(
-        "stk clamp: {path}, {kb:.1} KB, {total_lines} lines (threshold {threshold_kb:.0} KB). Outline below;\nfetch only what you need with Read(file_path, offset, limit)."
+        "stk clamp: {path}, {kb:.1} KB, {total_lines} lines (threshold {threshold_kb:.0} KB). Outline below;\nfetch only what you need with {retrieval}."
     );
 
     let mut entries: Vec<String> = entries_for(path, content).iter().map(|e| clip(e)).collect();
@@ -57,9 +62,11 @@ pub fn generate(path: &str, content: &str, file_bytes: u64, threshold: u64, max_
         entries.push(format!("\u{2026} (+{dropped} more entries)"));
     }
 
-    let footer = format!(
+    let footer = if codex {
+        format!("Fetch a range: stk read <same-file-path> --offset <line> --limit <count>.\nWhole file if needed: stk read <same-file-path> --offset 1 --limit {}.\nUse the original shell path, quoted as appropriate.", total_lines.max(1))
+    } else { format!(
         "Re-read a symbol's body: Read with offset=<line>, limit=<span>. Whole file only if truly\nneeded: re-Read with offset=1, limit={total_lines}."
-    );
+    ) };
 
     let reason = format!("{header}\n\n{}\n\n{footer}", entries.join("\n"));
     if reason.len() > REASON_MAX_BYTES {

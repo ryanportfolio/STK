@@ -55,6 +55,10 @@ pub fn deny_json(reason: &str) -> String {
 
 /// Decision result: `None` = allow (no stdout), `Some(json)` = deny payload.
 pub fn decide(raw_input: &str, config: &Config, store_root: PathBuf) -> Option<String> {
+    decide_for(raw_input, config, store_root, false)
+}
+
+pub fn decide_for(raw_input: &str, config: &Config, store_root: PathBuf, codex: bool) -> Option<String> {
     // Fail-open: malformed stdin -> allow.
     let input: HookInput = serde_json::from_str(raw_input).ok()?;
     if input.tool_name != "Read" {
@@ -118,8 +122,8 @@ pub fn decide(raw_input: &str, config: &Config, store_root: PathBuf) -> Option<S
     }
 
     // Rule 5: same path + same content hash already recorded this session -> deny (dup).
-    if config.dedup && !hash.is_empty() {
-        if store.latest_hash(&input.session_id, &file_path).as_deref() == Some(hash.as_str()) {
+    if config.dedup && !hash.is_empty()
+        && store.latest_hash(&input.session_id, &file_path).as_deref() == Some(hash.as_str()) {
             let _ = store.record_session(
                 &input.session_id,
                 &SessionRecord {
@@ -138,7 +142,6 @@ pub fn decide(raw_input: &str, config: &Config, store_root: PathBuf) -> Option<S
                 kind: "dup".into(),
             });
             return Some(deny_json(DUP_REASON));
-        }
     }
 
     // Rule 6: big file, first sight -> deny with outline.
@@ -148,12 +151,13 @@ pub fn decide(raw_input: &str, config: &Config, store_root: PathBuf) -> Option<S
         None if size <= OUTLINE_MAX_BYTES => fs::read_to_string(&file_path).ok()?,
         None => return None,
     };
-    let reason = outline::generate(
+    let reason = outline::generate_for(
         &file_path,
         &text,
         size,
         config.clamp_threshold,
         config.outline_max_lines,
+        codex,
     );
     let _ = store.record_session(
         &input.session_id,
@@ -195,7 +199,7 @@ fn read_head(path: &str, n: usize) -> Option<Vec<u8>> {
 
 /// Entry point for `stk hook claude`: read all of stdin, print deny JSON if any.
 /// Always returns exit code 0.
-pub fn run() -> i32 {
+pub fn run(codex: bool) -> i32 {
     let mut raw = String::new();
     if std::io::stdin().read_to_string(&mut raw).is_err() {
         return 0; // fail-open
@@ -205,7 +209,11 @@ pub fn run() -> i32 {
     std::panic::set_hook(Box::new(|_| {}));
     let result = std::panic::catch_unwind(|| {
         let config = Config::load();
-        decide(&raw, &config, crate::config::store_root())
+        if codex {
+            crate::codex::decide(&raw, &config, crate::config::store_root())
+        } else {
+            decide(&raw, &config, crate::config::store_root())
+        }
     });
     if let Ok(Some(payload)) = result {
         println!("{payload}");
@@ -361,8 +369,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let big = "l\n".repeat(20000);
         let path = write_file(dir.path(), "Cargo.lock", big.as_bytes());
-        let mut config = Config::default();
-        config.exclude = vec!["*.lock".into()];
+        let config = Config { exclude: vec!["*.lock".into()], ..Config::default() };
         assert_eq!(decide(&input_json("s", &path), &config, dir.path().join("store")), None);
     }
 
@@ -372,8 +379,7 @@ mod tests {
         let big = "fn main() {}\n".repeat(3000);
         let path = write_file(dir.path(), "big.rs", big.as_bytes());
         let root = dir.path().join("store");
-        let mut config = Config::default();
-        config.dedup = false;
+        let config = Config { dedup: false, ..Config::default() };
         let first = decide(&input_json("s", &path), &config, root.clone()).unwrap();
         let second = decide(&input_json("s", &path), &config, root).unwrap();
         assert!(first.contains("stk clamp:"));

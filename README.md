@@ -1,131 +1,57 @@
-<div align="center">
+<!-- readme-art: scripts/readme/build.mjs -->
+<picture>
+  <source media="(max-width: 500px) and (prefers-color-scheme: dark)" srcset="assets/readme/hero-narrow-dark.svg">
+  <source media="(max-width: 500px)" srcset="assets/readme/hero-narrow-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/hero-dark.svg">
+  <img src="assets/readme/hero-light.svg" width="100%" alt="STK: Session Token Killer. Claude Code and Codex share one outline engine. Large file reads become a map of declarations; targeted reads retrieve the content.">
+</picture>
 
-# STK: Session Token Killer
-
-**A Claude Code hook that stops oversized file reads from flooding your context.**
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Built with Rust](https://img.shields.io/badge/built_with-Rust-orange.svg)](https://www.rust-lang.org/)
-[![Platform](https://img.shields.io/badge/platform-win%20%7C%20macos%20%7C%20linux-lightgrey.svg)](#install)
-
-*Sibling to [RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk). RTK kills tokens per **command**. STK kills them per **session**.*
-
-</div>
-
----
-
-## The one number that started this
-
-We mined **250 real Claude Code sessions** (27.8 MB of tool output) to find where the tokens actually go. The answer was lopsided:
-
-> **85% of all oversized (>8 KB) context came from a single source: the native `Read` tool.**
-> RTK's shell hook never sees it. Nothing did. That's the gap STK fills.
-
-Big file reads are the fattest unfiltered stream left in an agent's context. STK intercepts them before they land.
-
-## What it does
-
-STK is a single Rust binary wired in as a Claude Code `PreToolUse` hook on the `Read` tool. When the agent tries to read a file, STK decides in under 10 ms:
-
-- **Small file** (≤ 16 KB) → **pass through untouched.** No behavior change.
-- **Already scoped** (`Read` with `offset`/`limit`) → **pass through.** Never fight a targeted read.
-- **Big file, first sight** → **deny with an outline instead.** A line-numbered structure map (functions, classes, headings, or JSON keys) plus exact instructions to fetch any range with `offset`/`limit`. The agent gets the shape of the file for ~2 KB and pulls only the parts it needs.
-- **Same file, already seen this session, unchanged** → **deny with a one-line "unchanged" note.** No re-sending 50 KB the model already has.
-- **Anything STK can't analyze** (binary, missing, unreadable, malformed input) → **pass through.** Fail-open, always. STK never blocks a read it doesn't understand.
-
-Full output is never lost. The agent re-reads any range on demand. STK trades a guaranteed full dump for a cheap map plus targeted fetches.
-
-### What an outline looks like
-
-Instead of 84 KB of source hitting context, the model sees:
-
-```
-stk clamp: src/pipeline.ts, 84.3 KB, 2140 lines (threshold 16 KB).
-Outline below; fetch only what you need with Read(file_path, offset, limit).
-
-   1  import { … } (12 import lines)
-  40  export interface Config
-  92  export class Pipeline
- 118    constructor(opts: PipelineOpts)
- 143    async run(input: Stream): Promise<Result>
- 402    private flush()
- ...
-2101  export function main()
-
-Re-read a symbol's body: Read with offset=<line>, limit=<span>.
-```
+**One binary for Claude Code and Codex.** STK replaces oversized file reads with line-numbered outlines, so the agent can fetch the parts it needs. Small files and scoped reads pass through.
 
 ## Install
 
-STK is a single binary with no runtime dependencies.
+Requires Rust and an installed client.
 
 ```bash
+git clone https://github.com/ryanportfolio/STK.git
+cd STK
 cargo install --path .
+stk init --auto
 ```
 
-Then print the hook snippet and add it to your Claude Code settings:
+Setup detects client settings directories, preserves other hooks, and backs up changed files. Restart your clients afterward. **Codex also requires you to review and trust STK through `/hooks`.**
+
+Select a client with `--claude` or `--codex`. Preview with `--dry-run`; remove STK's hooks with `--uninstall`. [Setup and configuration](docs/usage.md)
+
+## One engine, two adapters
+
+| Client | Reads intercepted | Repeated large reads |
+| --- | --- | --- |
+| [Claude Code](src/hook.rs) | Native `Read` calls | Unchanged files get a short note; scoped reads still work. |
+| [Codex](src/codex.rs) | Simple `cat`, `rtk read`, and `Get-Content` calls | Returns the outline again, preserving access across subagents and compaction. |
+
+Codex passes through pipelines, scripts, interpolation, multiple paths, and unfamiliar flags. STK passes through files it cannot analyze. [Exact coverage](docs/usage.md#codex-coverage)
+
+## Use it
+
+Hooks work automatically after setup. The same binary also gives you direct access:
 
 ```bash
-stk init
+stk outline src/main.rs
+stk read src/main.rs --offset 1 --limit 40
+stk gain
 ```
 
-`stk init` prints the exact `PreToolUse` block to paste into `~/.claude/settings.json` (or a project `.claude/settings.json`). **STK never edits your settings for you.** You paste it, so you stay in control of what runs.
+Either `--offset` or `--limit` bypasses outlining. `--offset 1` returns the whole file. [All commands](docs/usage.md#usage)
 
-Verify the hook is live:
+## Verified behavior
 
-```bash
-echo {} | stk hook claude   # prints nothing, exits 0
-```
+The **same release build** was exercised through the actual Claude Code and Codex CLIs on Windows. Each client received an outline for a whole-file read, then recovered the requested lines. The tests used local scripted model endpoints; they establish hook behavior, not net session savings.
 
-## Usage
+[Read the verification record](docs/dual-client-verification.md)  /  [Run the tests](docs/usage.md#build-and-test)  /  [Design specification](SPEC.md)
 
-| Command | What it does |
-|---|---|
-| `stk hook claude` | The hook entry point (stdin JSON → decision JSON). Wired via `stk init`. |
-| `stk outline <path>` | Print the outline for a file by hand. |
-| `stk gain` | Savings so far: clamps, dedup hits, bytes avoided, estimated tokens. |
-| `stk gain --json` | Same, machine-readable (totals + per-day series) for dashboards. |
-| `stk config` | Show active config and store location. |
+`stk gain` reports an upper bound on bytes avoided. Follow-up reads cost tokens, and direct `stk read` calls are not included. macOS and Linux runtime behavior has not yet been verified.
 
-### Configuration
+STK complements [RTK](https://github.com/rtk-ai/rtk): STK outlines file reads; RTK filters other command output.
 
-All optional, via `stk`'s config file (path shown by `stk config`):
-
-```toml
-clamp_threshold   = 16384      # bytes; files at or below this always pass through
-outline_max_lines = 80         # cap on outline length
-dedup             = true       # dedup identical re-reads within a session
-exclude           = ["*.lock"] # globs that always pass through untouched
-```
-
-## Honest limitations
-
-STK reports **bytes avoided**: the file bytes it kept out of context minus the small outline it sent. That number is real, but read it as an **upper bound**. Here is what it does not capture:
-
-- When the agent needs the actual content, it re-reads specific ranges. Those follow-up reads cost tokens STK can't see from the hook, so **true savings are somewhat lower than the raw counter.** `stk gain` says so in its own output.
-- STK only sees the `Read` tool. Shell command output is [RTK](https://github.com/rtk-ai/rtk)'s job. Run both.
-- Measured session-level exact-repeat rate was only 3.2%, so STK deliberately ships **no diff/delta engine**. Dedup is a cheap exact-hash check, nothing more. We built what the data justified and skipped what it didn't.
-
-## How it fits with RTK
-
-|  | [RTK](https://github.com/rtk-ai/rtk) | STK |
-|---|---|---|
-| Scope | Shell command output | `Read` tool output |
-| Unit | Per command | Per session |
-| Mechanism | Filter & compress | Outline & clamp |
-| Loss | Lossless (strips decor) | Lossy but recoverable (re-read on demand) |
-
-They cover different halves of the same problem. Together they clamp the two fattest input streams an agent pays for.
-
-## Development
-
-```bash
-cargo build --release
-cargo test            # 38 tests: decision matrix, outline generation, dedup, fail-open, JSON contract
-```
-
-See [SPEC.md](SPEC.md) for the full design: decision matrix, outline format per file family, session store layout, and the fail-open contract.
-
-## License
-
-[MIT](LICENSE) © ryanportfolio
+[MIT license](LICENSE)
