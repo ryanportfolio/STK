@@ -622,7 +622,9 @@ h2 {
   .led { animation: none; }
 }
 
-/* Client totals stay readable on narrow screens. */
-.client-totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.8rem; margin-bottom: 1rem; }
-.client-totals .well { padding: 1rem; }
-@media (max-width: 600px) { .client-totals { grid-template-columns: 1fr; } }
+/* Large, single-word section titles. */
+h1 { font-size: clamp(5rem, 16vw, 10rem); line-height: 0.95; letter-spacing: -0.07em; }
+h2 { font-size: clamp(2.6rem, 9vw, 6rem); line-height: 1; letter-spacing: -0.06em; text-wrap: nowrap; }
+.meter-heading { margin: 0 0 1.4rem; }
+.client-support { margin: 1.2rem 0; color: var(--phosphor); font-size: 1rem; }
+.hero-description { margin: 0; max-width: none; font-size: clamp(1rem, 1.8vw, 1.4rem); line-height: 1.65; }
