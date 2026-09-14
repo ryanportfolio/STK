@@ -1,9 +1,9 @@
 ﻿{
-    "generated_at":  "2026-09-14T02:19:02Z",
+    "generated_at":  "2026-09-14T03:19:04Z",
     "stk":  {
-                "bytes_avoided":  44257323,
+                "bytes_avoided":  44297535,
                 "caveat":  "gross bytes avoided, estimated at bytes/4; follow-up reads and overhead are excluded, so net token savings are unmeasured",
-                "clamps":  853,
+                "clamps":  854,
                 "clients":  {
                                 "claude":  {
                                                "bytes_avoided":  0,
@@ -12,10 +12,10 @@
                                                "est_tokens":  0
                                            },
                                 "codex":  {
-                                              "bytes_avoided":  289787,
-                                              "clamps":  8,
+                                              "bytes_avoided":  329999,
+                                              "clamps":  9,
                                               "dup_hits":  0,
-                                              "est_tokens":  72446
+                                              "est_tokens":  82499
                                           },
                                 "legacy":  {
                                                "bytes_avoided":  43967536,
@@ -324,10 +324,16 @@
                                  "clamps":  7,
                                  "date":  "2026-09-13",
                                  "dup_hits":  0
+                             },
+                             {
+                                 "bytes_avoided":  40212,
+                                 "clamps":  1,
+                                 "date":  "2026-09-14",
+                                 "dup_hits":  0
                              }
                          ],
                 "dup_hits":  351,
-                "est_tokens":  11064330
+                "est_tokens":  11074383
             },
     "rtk":  {
                 "commands":  170698,
