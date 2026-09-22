@@ -1,15 +1,15 @@
 ﻿{
-    "generated_at":  "2026-09-22T21:19:04Z",
+    "generated_at":  "2026-09-22T22:19:02Z",
     "stk":  {
-                "bytes_avoided":  48266974,
+                "bytes_avoided":  48358853,
                 "caveat":  "gross bytes avoided, estimated at bytes/4; follow-up reads and overhead are excluded, so net token savings are unmeasured",
-                "clamps":  945,
+                "clamps":  948,
                 "clients":  {
                                 "claude":  {
-                                               "bytes_avoided":  3361106,
-                                               "clamps":  68,
+                                               "bytes_avoided":  3452985,
+                                               "clamps":  71,
                                                "dup_hits":  13,
-                                               "est_tokens":  840276
+                                               "est_tokens":  863246
                                            },
                                 "codex":  {
                                               "bytes_avoided":  938332,
@@ -368,17 +368,17 @@
                                  "dup_hits":  0
                              },
                              {
-                                 "bytes_avoided":  272255,
-                                 "clamps":  10,
+                                 "bytes_avoided":  364134,
+                                 "clamps":  13,
                                  "date":  "2026-09-22",
                                  "dup_hits":  0
                              }
                          ],
                 "dup_hits":  364,
-                "est_tokens":  12066743
+                "est_tokens":  12089713
             },
     "rtk":  {
-                "commands":  183345,
+                "commands":  183453,
                 "tokens_saved":  "221.8M",
                 "reduction":  "57.7%",
                 "source":  "rtk gain (RTK\u0027s own accounting)"
