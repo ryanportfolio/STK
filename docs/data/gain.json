@@ -1,15 +1,15 @@
 ﻿{
-    "generated_at":  "2026-09-26T05:19:05Z",
+    "generated_at":  "2026-09-26T06:19:02Z",
     "stk":  {
-                "bytes_avoided":  64755285,
+                "bytes_avoided":  65073826,
                 "caveat":  "gross bytes avoided, estimated at bytes/4; follow-up reads and overhead are excluded, so net token savings are unmeasured",
-                "clamps":  1334,
+                "clamps":  1340,
                 "clients":  {
                                 "claude":  {
-                                               "bytes_avoided":  18622752,
-                                               "clamps":  405,
-                                               "dup_hits":  137,
-                                               "est_tokens":  4655688
+                                               "bytes_avoided":  18941293,
+                                               "clamps":  411,
+                                               "dup_hits":  141,
+                                               "est_tokens":  4735323
                                            },
                                 "codex":  {
                                               "bytes_avoided":  2164997,
@@ -392,19 +392,19 @@
                                  "dup_hits":  32
                              },
                              {
-                                 "bytes_avoided":  1742951,
-                                 "clamps":  49,
+                                 "bytes_avoided":  2061492,
+                                 "clamps":  55,
                                  "date":  "2026-09-26",
-                                 "dup_hits":  11
+                                 "dup_hits":  15
                              }
                          ],
-                "dup_hits":  488,
-                "est_tokens":  16188821
+                "dup_hits":  492,
+                "est_tokens":  16268456
             },
     "rtk":  {
-                "commands":  222296,
-                "tokens_saved":  "257.2M",
-                "reduction":  "52.8%",
+                "commands":  222624,
+                "tokens_saved":  "257.3M",
+                "reduction":  "52.5%",
                 "source":  "rtk gain (RTK\u0027s own accounting)"
             }
 }
