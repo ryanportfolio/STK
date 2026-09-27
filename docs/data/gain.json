@@ -1,15 +1,15 @@
 ﻿{
-    "generated_at":  "2026-09-27T08:19:05Z",
+    "generated_at":  "2026-09-27T09:19:01Z",
     "stk":  {
-                "bytes_avoided":  76080370,
+                "bytes_avoided":  76114942,
                 "caveat":  "gross bytes avoided, estimated at bytes/4; follow-up reads and overhead are excluded, so net token savings are unmeasured",
-                "clamps":  1485,
+                "clamps":  1486,
                 "clients":  {
                                 "claude":  {
-                                               "bytes_avoided":  29732804,
-                                               "clamps":  546,
+                                               "bytes_avoided":  29767376,
+                                               "clamps":  547,
                                                "dup_hits":  188,
-                                               "est_tokens":  7433201
+                                               "est_tokens":  7441844
                                            },
                                 "codex":  {
                                               "bytes_avoided":  2380030,
@@ -398,17 +398,17 @@
                                  "dup_hits":  53
                              },
                              {
-                                 "bytes_avoided":  3236586,
-                                 "clamps":  51,
+                                 "bytes_avoided":  3271158,
+                                 "clamps":  52,
                                  "date":  "2026-09-27",
                                  "dup_hits":  9
                              }
                          ],
                 "dup_hits":  539,
-                "est_tokens":  19020092
+                "est_tokens":  19028735
             },
     "rtk":  {
-                "commands":  233198,
+                "commands":  233258,
                 "tokens_saved":  "270.0M",
                 "reduction":  "50.7%",
                 "source":  "rtk gain (RTK\u0027s own accounting)"
