@@ -29,7 +29,7 @@ Open review with 1 line restating what changed + goal → user confirms you're a
 
 Dispatch **one** subagent via Agent tool — independent devil's advocate. Model reviewing own change rubber-stamps; whole value of "any reason not to?" = distance self-review can't fake.
 
-- **Model:** Agent tool `opus` (currently Opus 4.8). **Type:** `general-purpose`, fresh context.
+- **Model:** honor an explicit user model choice; otherwise inherit the configured session model. Inspect the exposed tool and model options before dispatch. **Type:** `general-purpose`, fresh context. An unavailable requested model is a capability gap, not permission to substitute silently.
 - **Feed only:** diff under review (or scoped slice) + 1-line statement of goal. Do **not** paste conversation / unrelated history. Minimal context = the point.
 - **Ask for strongest honest case *against* keeping this change**, specifically:
   - **Scope** — does more than goal needs? Unrequested refactor, extra abstraction, defensive code, drive-by edits belonging in a separate change.
@@ -39,7 +39,7 @@ Dispatch **one** subagent via Agent tool — independent devil's advocate. Model
   - **Simpler path** — smaller / more local change hitting same goal, less surface?
   - **Wrong-place / wrong-time** — right idea, wrong PR / wrong layer / premature (YAGNI).
   - Be specific + skeptical, cite diff, **not** restate approvingly. 1-2 cheap greps/reads OK to ground a claim; no deep repo spelunking.
-- **One agent only.** Dispatch fails / nothing useful → build counter-case yourself, don't block.
+- **One agent only.** If fresh dispatch is unavailable or fails, disclose that the independent check did not complete. Useful personal critique may continue, clearly labeled as self-review; it cannot complete the independent gate. A completed reviewer finding no valid criticism is a valid result, not a dispatch failure.
 
 Then **you** own synthesis: drop off-base bits (agent lacks full repo/project context), keep what lands, fold into review below. Integrate — don't relay raw output.
 

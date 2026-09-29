@@ -1,82 +1,64 @@
 ---
 name: arena
-description: "Spawn N parallel candidate attempts at one task, pick the strongest as base, graft the losers' best parts in. Use when the user says /arena, \"arena this\", or when one attempt at a non-trivial artifact would lock in the wrong shape."
+description: Builds parallel attempts at one task, judges them blind, and grafts the best ideas onto the strongest. Use for /arena, "try a few approaches", "build me options", bakeoffs, competing versions, or a stalled long-horizon or wow-loop step.
 ---
 
 # Arena
 
-Fan out N parallel attempts at the same task. Read every candidate end to end. Pick the strongest as the base. Graft the best ideas from the others into it. Verify the synthesized result.
+Use when the right shape of a solution is unclear and building several real versions will show it. Triggers: `/arena`, "try a few approaches", "build me options", bakeoffs, competing versions, or a stalled `long-horizon` or `wow-loop` step.
+Skip it for "arena" meaning a game level or map, work whose shape is obvious, tuning values of a settled design (`lab`), comparing options on paper (`dare`), or reviewing an existing diff (`impartial-review`).
 
-Not the same as wow-loop (one implementer iterated under adversarial critique) or impartial-review (review of an existing diff). Arena is a bakeoff plus synthesis: use it when the *shape* of the solution is the open question.
+## Before starting
 
-## Start
+Every candidate and the judge run with fresh context: Agent tool workers, plus `codex exec` processes for Codex workers. If no fresh-context route exists, tell the user and stop. The parent never builds a candidate itself.
 
-Open a todo list with one entry per phase before launching anything. The arena runs autonomously and the list keeps phases from silently disappearing.
+Arena permits work in scratch only. Commit, push, PR, merge, deploy, and installs each need their own authorization.
 
-1. Frame
-2. Fan out
-3. Cross-judge
-4. Pick
-5. Graft
-6. Verify
+## The arena folder
 
-## Phase A: Frame
+Everything lives under `.tmp/arena/<slug>/`. These access rules carry the blinding and isolation.
 
-The N candidates receive the same prompt, so the prompt is the contract. Get it right before spawning anything.
+| Path | Contents | Written by | Read by |
+|---|---|---|---|
+| `brief.md` | Artifact, inputs, and constraints | Parent | Candidates and parent |
+| `criteria.md` | 3 to 6 pass/fail criteria an outsider could check, such as "adds a `--dry-run` flag that performs no writes" ("clean code" is too vague) | Parent | Parent and judge only; never copied into a candidate's folder or worktree |
+| `c1/` ... `cN/` | One candidate's artifact plus `rationale.md`: the options it considered and dropped, with reasons | That candidate only, in this folder or its own git worktree | Parent only; the judge never sees `rationale.md` |
+| `judge/` | Each artifact copied under a neutral letter, with names, angle, vendor, and model traces removed and content otherwise unaltered | Parent | Judge, read-only |
+| `note.md` | The run record listed under "Done when" | Parent | Parent, then the user |
 
-1. State the artifact each candidate is producing.
-2. Derive the rubric. State what success looks like for *this* task, then turn it into 3-6 concrete gradeable criteria. Concrete: "Adds a --dry-run flag that skips writes". Vague: "code is correct". The rubric is the picker's tool in Phase D; candidates only see the task.
-3. Pick the runners. Default: 3 subagents on the session model (never Haiku), each prompted from a distinct angle (e.g. simplest-thing-that-works, robustness-first, user-experience-first) so diversity comes from framing, not chance. When the Codex CLI is available and the task warrants cross-vendor diversity, one candidate may run there (see codex-review for driving it). Spawn more candidates when the arena covers multiple design directions.
-4. Assign output paths. Each candidate writes to its own location: a git worktree where possible (worktree isolation when spawning), otherwise `.tmp/arena-<slug>/candidate-<n>/`. N candidates writing to the same path is shared mutable state and corrupts the comparison.
+No two workers share a writable path. The parent holds the letter-to-candidate map until the verdict, then writes it to `note.md`. Record any trace that cannot be removed as a blinding limit.
 
-## Phase B: Fan out
+## Workers
 
-Spawn all N subagents in one message so they run concurrently, each with the task, the path to any shared grounding, its own output path, and instructions to produce both the artifact and a short rationale.
+**Candidates.** Three by default; more on request or when the options are many. Each brief names a different angle, such as minimal change, failure-proof, or end-user-first. Agent workers run with `isolation: "worktree"` on Opus, the latest Fable, or higher, never `sonnet` or `haiku`. A user-chosen model that meets that floor wins.
 
-The rationale is mandatory. Without it, the parent cannot tell whether a candidate's structure is principled or accidental, which makes Phase E grafting unreliable. Each rationale names the alternatives the candidate considered and what it rejected.
+Mix vendors without asking. If Codex has an accepted route (a ChatGPT login or a `model_provider` gateway, as the `codex-review` preflight defines), one candidate and the judge run through `codex exec` with the Sol model id that `codex-review` pins. Take flags from local `codex exec --help`, and never bypass approvals or the sandbox. Only the user's explicit request skips Codex. No accepted route: all workers run on Claude, noted; never switch Codex to an API key or paid credits.
 
-If a candidate fails to produce output, proceed with N-1 and note the dropout in the synthesis record.
+For browser-rendered artifacts, each candidate brief includes the `CLAUDE.md` browser rule.
 
-## Phase C: Cross-judge
+A candidate that returns nothing, or a Codex run the sandbox blocks, is a dropout. Record it and continue with the rest.
 
-After all Phase B candidates complete, spawn one fresh read-only judge subagent. Prefer a different vendor from the candidates (Codex CLI) when available; otherwise a fresh same-model subagent still removes the parent's authorship bias. The judge sees the rubric and the candidates by path label only — never which angle or vendor produced which — scores each criterion, and recommends a base with rationale. It runs in parallel with the parent's own reading in Phase D, not with the candidates themselves: spawning while candidates are still writing means the judge sees partial outputs and reports them as dropouts.
+**Judge.** Start it only after all candidates return. Fresh and read-only, it sees only `criteria.md` and `judge/`, and returns pass/fail per criterion with evidence for every letter, plus a recommended base.
 
-## Phase D: Pick a base
+## Deciding
 
-Read every candidate end to end before picking. Skimming N candidates surfaces only the candidate whose surface looks most familiar.
+Read every candidate completely, low scorers included, and score the criteria yourself. Before overruling the judge, recheck the evidence it cited.
 
-Score each candidate against the rubric criterion by criterion, not on holistic feel. Compare against the cross-judge. Agreement on the base confirms the pick. Disagreement means one of you is biased or the rubric was ambiguous; read both rationales before deciding.
+The base is the candidate whose design the planned merges would disturb least; if still tied, the one with less code. Take at most one or two ideas from each other candidate and rewrite them to the base's conventions. A reader of the final artifact should not be able to tell where one candidate ends and another begins.
 
-Pick the base on which candidate a future maintainer can extend most easily without breaking invariants. Prefer the cleaner boundary or smaller surface area when two feel tied.
+If the candidates split over a basic premise, `brief.md` has a gap: that gap gets fixed in the brief and a new round runs; a merge of both premises is never the answer. If they all agree, still run the checks.
 
-Record the pick and the reason in a short synthesis note alongside the base artifact, including the cross-judge's verdict.
+## Reruns
 
-## Phase E: Graft
+One rerun total, spent on either a split premise or a verification failure traced to the brief. If verification fails on something another candidate already solved, return to merging instead. More reruns need the user's OK.
 
-Walk each losing candidate once more and identify what is worth porting into the base. The signal is usually one or two things per candidate, not most of it.
+## Done when
 
-Fold each graft in by hand, redesigning it to fit the base's shape. Don't paste mechanically. The result has to remain coherent under one mental model.
+The artifact passes the real checks it claims (tests, build, render, measurement), and `note.md` lists, in this order:
 
-Record what was grafted, from which candidate, and what was rejected and why. The rejection notes are the highest-signal part of the record: future readers learn from what you considered and dropped, not just what you kept.
+1. A worker table: letter, model, vendor, angle, and outcome (returned, dropped, or blocked).
+2. Blinding limits and the judge's verdict.
+3. For each non-base candidate: every idea you looked at, marked taken or left, with the reason. Put the base choice and its reason at the top of this section.
+4. Check commands and their results.
 
-When N candidates converge on the same shape, that is a strong agreement signal. Note the convergence in the record and ship the consensus shape; no graft needed. When N candidates wildly diverge, Phase A was under-specified. Reframe and re-run rather than averaging the divergence.
-
-## Phase F: Verify
-
-The synthesized artifact has to hold up under the same scrutiny as any other output. The arena does not earn a verification pass: run the real check the artifact claims to satisfy.
-
-If verification surfaces a problem the arena did not catch, either Phase A was wrong (re-frame and re-run) or one candidate caught it and you missed the graft (go back to Phase E). Don't paper over.
-
-## Outputs
-
-One synthesized artifact. One short synthesis note alongside, naming the base, the grafts (with source candidate), the rejections, the dropouts if any, and the verification result. Scratch candidate outputs stay in `.tmp/` or their worktrees; only the synthesis ships.
-
-## Anti-patterns
-
-- Don't average divergent candidates into a hybrid nobody designed. Reframe and re-run.
-- Don't let the judge see angle or vendor labels; sanitized path labels only.
-- Don't skip reading a candidate because the judge scored it low; grafts hide in losers.
-- Don't run an arena on trivial work; one attempt suffices when the shape is obvious.
-
----
-Adapted from the `arena` skill in [cursor/plugins pstack](https://github.com/cursor/plugins/tree/main/pstack) (MIT, by poteto).
+The parent writes the final artifact to the path the user named, or else where the base candidate's work belongs in the repo. Candidate folders stay in scratch.

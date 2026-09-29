@@ -1,5 +1,6 @@
 ---
 description: Use only when the user explicitly invokes /why to challenge the assistant's immediately prior recommendation; never trigger from ordinary why questions or paraphrases.
+disable-model-invocation: true
 ---
 
 # Why
@@ -35,10 +36,10 @@ Verify the one or two facts the pick actually leans on. If nothing needed verify
 
 Dispatch **one** subagent via the Agent tool for the "what it could be missing" angle — independent distance the self-review can't give itself:
 
-- **Model:** the Agent tool's `opus` model (currently Opus 4.8). **Type:** `general-purpose`, fresh context.
+- **Model:** honor an explicit user model choice; otherwise inherit the configured session model. Inspect the exposed tool and model options before dispatch. **Type:** `general-purpose`, fresh context. An unavailable requested model is a capability gap, not permission to substitute silently.
 - **Feed it only the recommendation under review** — the text of your immediately-preceding turn, plus at most the single user message that prompted it so the pick makes sense. Do **not** paste the whole conversation or unrelated history. Minimal context is the point: genuine distance, no wasted tokens chewing the thread.
 - **Ask it for:** unstated assumptions, edge cases the pick ignores, costs or risks not surfaced, and the conditions under which this is the *wrong* call. Tell it to be specific and skeptical, to **not** restate the recommendation, and to say plainly if the pick looks weak. Reasoning-level blind spots are the job — it may do one targeted grep/read if a claim is cheaply checkable, but it should not go spelunking the repo.
-- **One agent only.** If dispatch fails or it returns nothing useful, fall back to your own critique — don't block the review on it.
+- **One agent only.** If fresh dispatch is unavailable or fails, disclose that the independent check did not complete. Useful personal critique may continue, clearly labeled as self-review; it cannot complete the independent gate. A completed reviewer finding no valid criticism is a valid result, not a dispatch failure.
 
 Then **you** own the synthesis: take the subagent's findings, drop anything off-base (it lacks full repo context), and fold the rest into the review below. Don't relay its raw output — integrate it.
 

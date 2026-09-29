@@ -1,5 +1,6 @@
 ---
 description: Use when the user explicitly asks to lab or prototype a visual, UI, motion, or game-feel element with live tuning before production implementation.
+disable-model-invocation: true
 ---
 
 # lab — live-tune an element in an isolated sandbox, then port + delete
@@ -33,7 +34,7 @@ Start from the matching skeleton in `templates.md`. For each knob, add a labeled
 ### 3. Add "Copy Settings" — and design for the `file://` clipboard gotcha
 A button that serializes the current control values to JSON. Keys = real constant names (contract rule 3).
 
-**CRITICAL gotcha (bit a real session — "I click copy settings but it's not copying"):** every lab here runs from `file://` (step 4), and on a `file://` page `navigator.clipboard` is frequently **`undefined`** (the Clipboard API needs a secure context). `navigator.clipboard.writeText(...)` then throws a **synchronous `TypeError`** — NOT a rejected promise — so a naive `.catch(() => {})` never runs, the click handler aborts, and the visible JSON mirror never gets written → the button looks dead AND nothing is copyable.
+**Clipboard capability varies:** on a `file://` page `navigator.clipboard` is frequently **`undefined`** (the Clipboard API needs a secure context). `navigator.clipboard.writeText(...)` then throws a **synchronous `TypeError`** — NOT a rejected promise — so a naive `.catch(() => {})` never runs, the click handler aborts, and the visible JSON mirror never gets written → the button looks dead AND nothing is copyable.
 
 So make the JSON readable **without** relying on the clipboard:
 
@@ -44,16 +45,17 @@ So make the JSON readable **without** relying on the clipboard:
 
 The skeletons in `templates.md` already implement this pattern — copy them rather than reinventing the naive `navigator.clipboard.writeText(json)` one-liner.
 
-### 4. Place it
-- **Default: a local `file://`-openable `.tmp/<name>.html`.** `.tmp/` is gitignored, so the lab can never be committed or deployed by accident. Hand off the absolute on-disk path; the user opens it directly with `file://`.
-- **Only consider a served lab** (e.g. a public/static folder on a dev server) when the user can actually reach that dev server from their machine — check the project's CLAUDE.md environment notes first. If a lab genuinely needs app-served assets/fonts, inline/mock them instead so the local file still works standalone.
+### 4. Place and open it
 
-Name it whatever the user asks. They may want a generic name with no element word in it — honor an explicit name/title request exactly, including the page `<title>` and any `<h*>` heading. Default fallback when they don't specify: `<element>-lab.html` (e.g. `bomb-lab.html`).
+Use an authorized scratch location, defaulting to `.tmp/<name>.html`; verify ignore status rather than assuming the file cannot be staged. Inspect actual file, browser, server, and preview capabilities. Open a local file if supported, or use a reachable local server with supported controls. Verify the user can reach the chosen preview. Do not publish or install tools merely to show the lab.
+
+Honor an explicit filename/title throughout. Otherwise use `<element>-lab.html`. Keep the lab standalone even when served.
 
 ### 5. Hand off to the user
-Give them the **absolute on-disk path** to open with `file://` (e.g. `C:\...\.tmp\test-labs.html`) — NOT a dev-server URL (they can't reach it; see step 4). Tell them plainly: **tune the sliders → read/copy the JSON from the live box → paste it back here.** Mention the box updates live and that they can just paste/screenshot it if the Copy button can't reach the OS clipboard (common on `file://`). Then wait.
 
-Note: editing the lab file re-loads it in the user's preview/browser, which **resets their in-progress tune to the seeded defaults**. Avoid editing the lab after handoff unless necessary; if you must (e.g. to fix the copy button), warn them their current values will reset. You cannot read their live in-memory slider state — the preview panel is a viewer, not an eval bridge (`preview_list` returns no server for a `file://` lab), so the live JSON box is the only channel back.
+Provide the usable absolute file link or verified preview URL. Tell the user to tune controls and share the live JSON. When an exposed browser tool can read the live settings, use that capability with the existing authorization; otherwise ask for pasted JSON. Never assume a particular preview host has or lacks an evaluation bridge.
+
+Avoid editing or reloading after handoff because it can reset the tune. Capture current values through available controls first; if unavailable, explain the reset before a necessary edit. Wait for the user's chosen settings before porting.
 
 ### 6. Port the values
 When the user pastes the JSON, map each key to its real constant and make the edits in the actual code. Flag any knob that does NOT map cleanly so the user knows the lab and the real thing will differ slightly — e.g. the lab had a per-effect duration knob but the real code shares one duration constant across effects, so that knob can't carry without a bigger change. Be honest about these gaps.

@@ -1,5 +1,22 @@
 (function() {
-  const WS_URL = 'ws://' + window.location.host;
+  // The session token normally travels via cookie; the query fallback covers
+  // browsers configured to block cookies.
+  const token = new URLSearchParams(window.location.search).get('token');
+  const WS_URL = 'ws://' + window.location.host +
+    (token ? '/?token=' + encodeURIComponent(token) : '');
+
+  // Cookie-blocked browsers: relative /files/ requests carry neither the
+  // query token nor the cookie, so re-point them at tokened URLs. Harmless
+  // when cookies work (the query token is equally accepted).
+  if (token) {
+    const suffix = 'token=' + encodeURIComponent(token);
+    document.querySelectorAll('[src^="/files/"], [href^="/files/"]').forEach((el) => {
+      const attr = el.hasAttribute('src') ? 'src' : 'href';
+      const value = el.getAttribute(attr);
+      if (value.includes('token=')) return;
+      el.setAttribute(attr, value + (value.includes('?') ? '&' : '?') + suffix);
+    });
+  }
   let ws = null;
   let eventQueue = [];
 

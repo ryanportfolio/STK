@@ -36,12 +36,15 @@ The server watches a directory for HTML files and serves the newest one to the b
 # Start server with persistence (mockups saved to project)
 scripts/start-server.sh --project-dir /path/to/project
 
-# Returns: {"type":"server-started","port":52341,"url":"http://localhost:52341",
+# Returns: {"type":"server-started","port":52341,
+#           "url":"http://localhost:52341/?token=9f2c...","token":"9f2c...",
 #           "screen_dir":"/path/to/project/.superpowers/brainstorm/12345-1706000000/content",
 #           "state_dir":"/path/to/project/.superpowers/brainstorm/12345-1706000000/state"}
 ```
 
 Save `screen_dir` and `state_dir` from the response. Tell user to open the URL.
+
+The URL carries a per-session access token. The server rejects every page load and WebSocket connection that lacks it, so a stranger who can reach the port cannot read screens or submit fake choices. Always give the user the full URL including `?token=...`; a trimmed URL gets a 403.
 
 **Finding connection info:** The server writes its startup JSON to `$STATE_DIR/server-info`. If you launched the server in the background and didn't capture stdout, read that file to get the URL and port. When using `--project-dir`, check `<project>/.superpowers/brainstorm/` for the session directory.
 
@@ -90,6 +93,8 @@ scripts/start-server.sh \
 ```
 
 Use `--url-host` to control what hostname is printed in the returned URL JSON.
+
+Binding `0.0.0.0` exposes the port to everything that can reach the machine (LAN, container network, VPN). The session token is what keeps those clients out: connections without it are refused. Treat the full URL as a secret for the session and share it only with the user.
 
 ## The Loop
 

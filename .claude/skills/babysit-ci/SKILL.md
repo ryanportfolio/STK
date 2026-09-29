@@ -1,36 +1,51 @@
 ---
 name: babysit-ci
-description: "Watch a PR's checks and iterate on failures until green. Use for /babysit-ci, \"watch CI\", \"fix CI\", \"get the checks green\", or when a PR is waiting on failing or pending checks."
+description: "Watches a PR's checks and fixes failures. Use for /babysit-ci, \"watch CI\", \"fix CI\", \"get checks green\", or a PR with failing or pending checks; not a bare merge request."
 ---
 
 # Babysit CI
 
-Drive a PR's checks to green: watch, diagnose, apply the smallest fix, push, repeat.
+## Mode
 
-`gh pr checks` is the source of truth. It includes all PR-attached checks; `gh run list` only covers GitHub Actions and misses external checks.
+- **watch**: inspect and report. No edits, pushes, or reruns.
+- **fix** ("fix CI", "get checks green"): scoped fixes and pushes. Never merge.
+- Ambiguous request: watch.
 
-## Workflow
+## Loop
 
-1. Resolve the active PR: `gh pr view --json number,url,headRefName`.
-2. Inspect current checks before waiting: `gh pr checks --json name,bucket,state,workflow,link`.
-3. Checks already failed → diagnose those first. For a GitHub Actions check, `gh run view <run-id> --log-failed` and extract the first actionable error; otherwise follow the check's link to identify the failing command or service.
-4. Checks pending → watch with `gh pr checks --watch --fail-fast`. For long waits, run the watch in a background task and continue other work; report when it resolves.
-5. Apply the smallest safe fix for one failure cause. Push.
-6. Re-run `gh pr checks --json name,bucket,state,workflow,link` after every push — the check set itself can change — and repeat until green.
+1. Find the PR: `gh pr view <pr> --json number,url,headRefName,headRefOid`. No PR given: pass the branch from `git branch --show-current`.
+2. Read checks with `gh pr checks <pr> --json name,bucket,state,workflow,link`. Judge the PR by this output alone: Actions runs are only part of it, since apps and status contexts report here too.
+3. Diagnose failures before waiting on anything. Each failing check gets one root error: the earliest log line that names a cause; errors after it often follow from it.
+   - Actions check: take the run id from its link; `gh run view <run-id> --log-failed`.
+   - External check: open its link and find the step or service that failed.
+4. Pending checks: start `gh pr checks <pr> --watch --fail-fast` with Bash `run_in_background`. The harness re-invokes you when it exits; keep diagnosing meanwhile.
+5. Watch mode: once the watcher exits, reread the checks and the head SHA, report, and stop. Fix mode continues below.
 
-## Guardrails
+## Fix
 
-- Fix one actionable failure at a time; prefer minimal, low-risk changes before broader refactors.
-- Never bypass hooks (`--no-verify`) to force progress.
-- Failure clearly unrelated to the PR and already fixed on main → merge latest main instead of bloating the PR with unrelated fixes.
-- Flaky failure → retry once and report the flake evidence; don't silently re-run until green.
-- Verify a fix locally when a cheap local repro of the failing command exists, before spending a CI round trip.
+Sort each failure before touching code:
 
-## Output
+- **Not from this PR's diff**: see whether the default branch already passes that check. If it does, `git fetch origin` and `git merge origin/<default>` bring the fix in; this PR carries no patch for it.
+- **Flake**: one rerun (`gh run rerun <run-id> --failed`), and cite the evidence: it passed on rerun with no change, or it is a known flake (say where it is recorded).
+- **Caused by this PR**: if the failing command is cheap to run locally, reproduce the failure first and rerun it after the change. One cause per push. Stage explicit paths. Never pass `--no-verify`.
 
-- Current CI status.
-- Failure summary and fixes applied, in iteration order.
-- PR URL once checks are green; next action if blocked.
+After any push, restart at step 2. A push can trigger workflows the old list lacked or retire ones it showed, so check state read before the push is stale.
 
----
-Merged from the `loop-on-ci` + `fix-ci` skills and `ci-watcher` agent in [cursor/plugins cursor-team-kit](https://github.com/cursor/plugins/tree/main/cursor-team-kit) (MIT).
+## Stop, report, and ask before continuing
+
+- 3 fix pushes done.
+- The same failure survives a fix: switch to `fable-mode`, rethink the cause, and name the fix tier.
+- The fix needs secrets, infra, permissions, or a user decision.
+
+## Before calling it green
+
+Re-read `headRefOid`; if it moved, run the loop on the new head. A missing, skipped, or unavailable expected check does not pass; list it.
+
+Each fix push leaves a head that `/codex-review` has not seen. State that in the report. Rerunning the review bills the user's Codex subscription and needs their OK.
+
+A CI quirk that cost a retry goes to pitfalls via `recall`.
+
+## Report
+
+- Each iteration: check → first root error line → link → fix applied.
+- Final: status and PR URL, or blocked plus the next action.

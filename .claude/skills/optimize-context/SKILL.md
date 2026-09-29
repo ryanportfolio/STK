@@ -1,60 +1,35 @@
 ---
 name: optimize-context
 description: Use when the user asks to reduce per-turn context or token load, trim kernels, skills, or connectors, or propagate a generic context optimization to the starter.
+disable-model-invocation: true
 ---
 
-# optimize-context — cut per-turn context cost, propagate to the starter
+# Reduce measured context load
 
-The dominant token cost in long sessions is **input that reloads every turn**, not output prose. This skill is the playbook for finding and cutting it, plus porting the generic wins to `ryanportfolio/AI-Firmware` (formerly `claude-starter`) so every future repo inherits them.
+Inspect the active runtime, loaded instructions, exposed tools, and discovered skills before changing configuration. Find repeated material with little decision value. Preserve required rules and useful capabilities; removing bytes does not establish a runtime token saving.
 
-**First principle:** compression is **lossless when you relocate, not delete.** Always-loaded files become thin hooks; full detail moves to a subfile (`.claude/reference/`, a MEMORY subfile) read on demand. Accuracy/rules never trade against brevity — only fluff and duplication die.
+## Establish a baseline
 
-## The lever catalog (ranked by payoff)
+- Claude: inspect applicable CLAUDE.md files, indexed memory, skill descriptions, settings and connected tools. The local `bash .claude/scripts/context-weight.sh` report estimates file-measurable instruction weight; inspect its coverage and do not treat it as the full model input. Use current local CLI help/configuration to establish supported connector or visibility controls.
+- Codex: inspect applicable AGENTS.md files, exposed skill names/descriptions, ownership in `.agents/skill-modes.json`, maintained native resources, and installed discovery roots. Inspect current configuration and exposed tools; Claude `skillOverrides` does not establish Codex visibility. The repository generator may consume legacy overrides, so inspect that mapping before editing them. Use a native shell or small script to count bytes/characters for the exact selected files and discovered descriptions; label this a file/catalog estimate, not measured runtime tokens.
+- Record runtime/version when available, exact file scope, baseline counts, and any actual usage telemetry separately. Account totals or one completion's token count do not isolate the changed instructions.
 
-### 1. MCP connectors — biggest single win, NOT scriptable
-Each connected MCP server injects its tool-name list AND any instruction block into every turn. `claude mcp list` shows them. Disconnect ones this project never uses.
-- Account/marketplace connectors (claude.ai → Settings → Connectors) are **account-level** — `claude mcp remove` can't touch them (they re-sync); the user toggles them in the UI. Reversible (reconnect anytime).
-- This is the user's action, not a file edit. Identify the dead weight, name it, let them disconnect. Flag if a disconnect removes a capability the project sometimes needs (e.g. Context7 live docs → say so when you'd have used it).
+## Choose the smallest useful change
 
-### 2. Skill visibility — `skillOverrides` (project/bundled skills ONLY)
-The harness injects every visible skill's name + description every turn. Hide unused **project or bundled** skills in **committed** `.claude/settings.json`:
-```json
-"skillOverrides": { "lab": "off" }
-```
-- Values (schemastore-verified): `on` | `name-only` | `user-invocable-only` | `off`. **`off`** = gone from Claude's context AND the `/` picker.
-- **Keys are BARE skill names** (the project skill's directory name).
-- **PLUGIN SKILLS ARE NOT AFFECTED — hard limitation, schema-explicit.** Any key targeting a plugin skill (colon-prefixed or bare) is a silent no-op; 17 such keys sat in this template as dead config until 2026-07. Trim plugin skills at their source instead:
-  - Account-synced skills plugins (`@inline`, from claude.ai) → disable the individual skills or the sync in claude.ai settings. Per-account, not a repo file.
-  - Marketplace plugins → `claude plugin disable <name>` (all projects) or uninstall. No per-project plugin disable exists.
-- `off` takes effect **next session**. Scope precedence: `settings.local.json` > project `settings.json` > `~/.claude/settings.json`.
+Thin a kernel or index by moving conditional detail into a referenced resource. Keep important durable rules in the runtime's durable carrier. Relocation preserves content only when the destination and pointer exist; it can change whether and when guidance is retrieved. Test a representative task that needs the moved guidance before claiming preserved behavior.
 
-### 3. Kernel (CLAUDE.md) + index (MEMORY.md) compression
-- **Caveman-ultra the prose**, keep every rule exact.
-- **Thin hooks, detail in subfiles.** A fat index/kernel line taxes every turn; the subfile is free until recalled. Push PR-history / mechanism / proof to `.claude/reference/<topic>.md` (or a MEMORY subfile); leave a one-line hook + pointer. Before pointing a hook at a subfile, confirm the detail is actually there — relocate, don't dangle.
-- **Don't restate what the harness already injects every turn:** the available-skills list, the environment block (OS/shell/cwd/git/model), tool-doc behavior. Cut them — keep only the project's value-add (non-obvious implication, version pins not in env, the project-specific rule).
-- **Remove untrue / stale / irrelevant rules** outright (with the user's confirmation when it's a behavioral rule).
+Cut duplication, stale facts, and filler. Preserve current explicit user preferences and technical meaning. A behavioral deletion needs authority under the current request; do not infer it from a generic desire for fewer tokens.
 
-### 4. Verify the cut
-- **Measure first, then again after:** `bash .claude/scripts/context-weight.sh` prints the file-measurable per-turn weight (kernel + global CLAUDE.md + every skill's injected description) with per-skill breakdown. Run it before touching anything so the saving is a real delta, not a guess.
-- Byte counts before/after (`wc -c`) for kernel/index edits.
-- For skill disables / MCP disconnects: confirm **next session** the items are gone (current session's context is fixed).
-- Never claim a per-turn saving you didn't measure.
+For skill visibility or connectors, inspect the actual runtime's supported controls, scope, and reload behavior first. Distinguish project, personal, plugin, and account-owned sources. Disabling a capability can affect other projects; describe that scope and use only authorized controls. Do not assume a file edit controls an account connector or plugin. Prefer changing precise discovery descriptions over hiding useful skills merely to lower a count.
 
-## Gotchas (burned in)
-- **Durable vs ephemeral carrier:** a rule that looks duplicated by a SessionStart-hook message is NOT safe to cut — hook output is a one-time early message (droppable at compaction); CLAUDE.md re-injects every turn, so the kernel is the durable home (e.g. the caveman default stays in CLAUDE.md).
-- **`skillOverrides` is a silent no-op for plugin skills** — no error, the skill just keeps loading. A `skillUsage` entry like `superpowers:writing-skills` proves the skill RAN, not that an override key in that form works. Verify a disable by checking the skills list in a NEXT session, never by the write succeeding.
-- **Don't trust an agent's schema claim un-verified** — confirm enum values / property names against the real schema (`schemastore.org/claude-code-settings.json`) or the running config.
+For Claude legacy visibility values or plugin commands, verify current schema/help and installation rather than relying on remembered enum values or scope claims. For Codex, keep every Claude skill registered in `.agents/skill-modes.json` as `native` (with a maintained port in `.agents/skills/<name>/`) or `disabled`, and reconcile registry changes with files. After a change to a `native` skill's Claude source, update its Codex port to match and run `node .claude/scripts/sync-codex-skills.mjs --baseline <name>`; `--check` enforces both.
 
-## Propagation to claude-starter
-Only the **generic, portable** wins go up — run them through `sync-starter` Direction B (it owns the genericize + apply-at-`~/code/AI-Firmware` + PR mechanics):
-- **Portable:** `skillOverrides` disabling broadly-unused bundled skills (lean default; a project that needs `docx`/`pdf` re-enables it), CLAUDE.md structural conventions (caveman default, thin-hooks, don't-restate-injected-content), a leaner skill file (e.g. the trimmed `caveman`).
-- **NOT portable:** account-level MCP connector disconnects (per-account, not a repo file), project-specific reference/memory content, anything named after the current project.
-- Genericize first: strip project names/paths/URLs. If it can't be genericized, it stays local.
+## Verify and report
 
-## Anti-patterns
-- Deleting detail instead of relocating it to a subfile.
-- Cutting a rule that must persist all session (durable-carrier trap).
-- Bare-naming a `skillOverride` that has a project dupe.
-- Disabling a bundled skill a future project might need without leaving it re-enableable (the template default is lean; document the re-enable).
-- Pushing project-flavored content to the template — genericize or leave it.
-- Running this on every session — it's occasional, user-triggered maintenance.
+Repeat the same measurement on the same file/catalog scope. Check links, required contracts, and representative retrieval where behavior changed. Report byte/character deltas separately from token estimates and actual runtime telemetry. Never extrapolate a local estimate into per-turn savings without observed evidence.
+
+Already-loaded context may persist: verify discovery and tool exposure in a fresh session or supported reload. If no reload is possible, report that check as pending, with the exact expected change; successful file writes do not prove discovery changed.
+
+## Propagation
+
+Only propagate generic changes when already authorized. Use `sync-starter` for selective ownership-aware comparison and application. Project knowledge, personal voice, account connector choices, and local paths stay local. Preserve receiving-project customizations and deliberate disables. Installation or local optimization does not itself authorize commits, pushes, or publication.
