@@ -1,9 +1,9 @@
 ﻿{
-    "generated_at":  "2026-10-01T07:19:08Z",
+    "generated_at":  "2026-10-01T08:19:07Z",
     "stk":  {
-                "bytes_avoided":  96761243,
+                "bytes_avoided":  96955812,
                 "caveat":  "gross bytes avoided, estimated at bytes/4; follow-up reads and overhead are excluded, so net token savings are unmeasured",
-                "clamps":  2021,
+                "clamps":  2025,
                 "clients":  {
                                 "claude":  {
                                                "bytes_avoided":  43412332,
@@ -12,10 +12,10 @@
                                                "est_tokens":  10853083
                                            },
                                 "codex":  {
-                                              "bytes_avoided":  9381375,
-                                              "clamps":  354,
+                                              "bytes_avoided":  9575944,
+                                              "clamps":  358,
                                               "dup_hits":  0,
-                                              "est_tokens":  2345343
+                                              "est_tokens":  2393986
                                           },
                                 "legacy":  {
                                                "bytes_avoided":  43967536,
@@ -422,14 +422,14 @@
                                  "dup_hits":  27
                              },
                              {
-                                 "bytes_avoided":  587247,
-                                 "clamps":  19,
+                                 "bytes_avoided":  781816,
+                                 "clamps":  23,
                                  "date":  "2026-10-01",
                                  "dup_hits":  0
                              }
                          ],
                 "dup_hits":  612,
-                "est_tokens":  24190310
+                "est_tokens":  24238953
             },
     "rtk":  {
                 "commands":  268261,
