@@ -8,6 +8,7 @@ This is the Codex boundary for repositories using the AI Operating System starte
 - Use plain prose for security warnings, irreversible confirmations, and ambiguous multi-step decisions, then resume Ultra. A new session restores Ultra after the user temporarily disables it.
 - Read only `CLAUDE.md`'s Verification and Environment & Deploy Target sections for configured project facts. Use `.claude/reference/` for architecture, commands, deployment, and pitfalls. Other `CLAUDE.md` workflow rules are not Codex instructions.
 - Never execute `.claude/hooks/session-start.sh` in Codex.
+- No unit tests or type tests unless the user asks.
 
 ## Capabilities
 

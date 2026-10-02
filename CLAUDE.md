@@ -32,6 +32,7 @@ Defaults until configured:
 - Plan before acting. Break large refactors into atomic steps.
 - Reproduce bugs before fixing them.
 - Scope discipline: No unrequested refactors, features, abstractions, or extra coding. Minimum complexity for the task at hand; optimize performance.
+- No unit tests or type tests unless the user asks.
 - Solve generally. Never hard-code to pass specific tests. If a test or requirement is wrong, say so rather than work around it.
 - Scratch work → `.tmp/` (gitignored). Promote to `scripts/` if reusable; otherwise delete.
 - Durable project knowledge → `.claude/reference/` via `/recall save` (committed, travels to every machine and sandbox). Auto-memory is per-machine and supplementary, never a learning's only home.
