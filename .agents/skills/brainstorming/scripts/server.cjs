@@ -81,6 +81,12 @@ const CONTENT_DIR = path.join(SESSION_DIR, 'content');
 const STATE_DIR = path.join(SESSION_DIR, 'state');
 let ownerPid = process.env.BRAINSTORM_OWNER_PID ? Number(process.env.BRAINSTORM_OWNER_PID) : null;
 
+// Per-session secret. Every HTTP request and WebSocket upgrade must present it
+// (query param or cookie), so binding --host 0.0.0.0 doesn't let arbitrary
+// reachable clients read screens or forge choice events.
+const TOKEN = process.env.BRAINSTORM_TOKEN || crypto.randomBytes(16).toString('hex');
+const TOKEN_COOKIE = 'brainstorm_token';
+
 const MIME_TYPES = {
   '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript',
   '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg',
@@ -113,6 +119,33 @@ function wrapInFrame(content) {
   return frameTemplate.replace('<!-- CONTENT -->', content);
 }
 
+function tokenValid(candidate) {
+  if (typeof candidate !== 'string' || candidate.length === 0) return false;
+  const a = Buffer.from(candidate);
+  const b = Buffer.from(TOKEN);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+function requestToken(req) {
+  let url;
+  try {
+    url = new URL(req.url, 'http://localhost');
+  } catch (e) {
+    return null;
+  }
+  const queryToken = url.searchParams.get('token');
+  if (queryToken) return queryToken;
+  const match = (req.headers.cookie || '').match(
+    new RegExp('(?:^|;\\s*)' + TOKEN_COOKIE + '=([^;]*)')
+  );
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch (e) {
+    return null; // malformed percent-encoding: treat as no token, not a crash
+  }
+}
+
 function getNewestScreen() {
   const files = fs.readdirSync(CONTENT_DIR)
     .filter(f => f.endsWith('.html'))
@@ -127,8 +160,14 @@ function getNewestScreen() {
 // ========== HTTP Request Handler ==========
 
 function handleRequest(req, res) {
+  if (!tokenValid(requestToken(req))) {
+    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Forbidden: open the exact URL (including ?token=...) printed when the server started.');
+    return;
+  }
   touchActivity();
-  if (req.method === 'GET' && req.url === '/') {
+  const pathname = new URL(req.url, 'http://localhost').pathname;
+  if (req.method === 'GET' && pathname === '/') {
     const screenFile = getNewestScreen();
     let html = screenFile
       ? (raw => isFullDocument(raw) ? raw : wrapInFrame(raw))(fs.readFileSync(screenFile, 'utf-8'))
@@ -140,10 +179,13 @@ function handleRequest(req, res) {
       html += helperInjection;
     }
 
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Set-Cookie': TOKEN_COOKIE + '=' + encodeURIComponent(TOKEN) + '; HttpOnly; SameSite=Strict; Path=/'
+    });
     res.end(html);
-  } else if (req.method === 'GET' && req.url.startsWith('/files/')) {
-    const fileName = req.url.slice(7);
+  } else if (req.method === 'GET' && pathname.startsWith('/files/')) {
+    const fileName = pathname.slice(7);
     const filePath = path.join(CONTENT_DIR, path.basename(fileName));
     if (!fs.existsSync(filePath)) {
       res.writeHead(404);
@@ -165,6 +207,10 @@ function handleRequest(req, res) {
 const clients = new Set();
 
 function handleUpgrade(req, socket) {
+  if (!tokenValid(requestToken(req))) {
+    socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
+    return;
+  }
   const key = req.headers['sec-websocket-key'];
   if (!key) { socket.destroy(); return; }
 
@@ -339,8 +385,8 @@ function startServer() {
   server.listen(PORT, HOST, () => {
     const info = JSON.stringify({
       type: 'server-started', port: Number(PORT), host: HOST,
-      url_host: URL_HOST, url: 'http://' + URL_HOST + ':' + PORT,
-      screen_dir: CONTENT_DIR, state_dir: STATE_DIR
+      url_host: URL_HOST, url: 'http://' + URL_HOST + ':' + PORT + '/?token=' + encodeURIComponent(TOKEN),
+      token: TOKEN, screen_dir: CONTENT_DIR, state_dir: STATE_DIR
     });
     console.log(info);
     fs.writeFileSync(path.join(STATE_DIR, 'server-info'), info + '\n');

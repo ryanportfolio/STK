@@ -80,11 +80,7 @@ New quirk bites → `/recall save <text>`.
 Stays in this file: cross-cutting safety/process rules. Moves out: anything area-specific. Don't bloat the kernel.
 ## Codex compatibility
 
-Claude Code remains the primary runtime and `.claude/skills/` remains canonical.
-After adding, removing, or editing a skill or `skillOverrides`, run
-`node .claude/scripts/sync-codex-skills.mjs --write` and include the generated
-`.agents/skills/` changes. Do not hand-edit generated adapters; `AGENTS.md` owns
-Codex-specific runtime safety and tool translation.
+Every skill in `.claude/skills/` has a standalone Codex version in `.agents/skills/`, registered `native` in `.agents/skill-modes.json`, or is registered `disabled` when it needs Claude-only tools. Adding or editing a skill updates its Codex version in the same change, with tools translated per `.agents/codex-tools.md`; never ship a generated adapter. For a `native` skill, once its port matches, run `node .claude/scripts/sync-codex-skills.mjs --baseline <name>` to record the reviewed Claude source; `disabled` skills skip this step. Then run `node .claude/scripts/sync-codex-skills.mjs --check`, which fails on drift or a missing registration. `AGENTS.md` owns Codex runtime safety.
 
 ## Always-on unslop
 

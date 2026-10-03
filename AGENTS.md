@@ -34,10 +34,10 @@ This is the Codex boundary for repositories using the AI Operating System starte
 
 ## Shared Assets
 
-- `.claude/skills/` is canonical; `.agents/skills/` contains Codex adapters. Treat `$ARGUMENTS` as invocation input.
+- `.claude/skills/` remains Claude's library. Codex uses standalone native skills under `.agents/skills/`, registered in `.agents/skill-modes.json` as `native` or `disabled` (Claude-only). Read them directly and resolve resources from their Codex skill directory. Treat `$ARGUMENTS` as invocation input.
 - Read relevant `.claude/reference/` material before unfamiliar work and `.agents/CODEX-SKILL-COMPATIBILITY.md` before adapted, gated, or dangerous skills.
-- After canonical skill changes run `node .claude/scripts/sync-codex-skills.mjs --write`.
-- Tool mapping: `.claude/skills/using-superpowers/references/codex-tools.md`.
+- Adding or editing a skill updates its standalone Codex version in the same change and registers it `native` (or `disabled`) in `.agents/skill-modes.json`; never ship a generated adapter. For a `native` skill, once its port matches, run `node .claude/scripts/sync-codex-skills.mjs --baseline <name>` (`disabled` skills skip it), then `--check`, which fails on drift or a missing registration.
+- Tool mapping: `.agents/codex-tools.md`.
 
 ## Starter Maintenance
 
