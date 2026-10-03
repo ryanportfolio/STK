@@ -131,6 +131,9 @@ pub fn decide(raw: &str, config: &Config, root: PathBuf) -> Option<String> {
     if config.is_excluded(&path.to_string_lossy()) {
         return None;
     }
+    // Pick the threshold from the path as written, like the Claude hook does;
+    // canonicalizing a symlink can change its extension.
+    let threshold = config.threshold_for(&path.to_string_lossy());
     let path = path.canonicalize().ok()?;
     let path = path.to_str()?;
     // Codex gives subagents the parent session_id. Until a stable agent/context
@@ -138,6 +141,8 @@ pub fn decide(raw: &str, config: &Config, root: PathBuf) -> Option<String> {
     // another agent saw, or one lost during compaction.
     let mut config = config.clone();
     config.dedup = false;
+    config.clamp_threshold = threshold;
+    config.markdown_clamp_threshold = threshold;
     let adapted = json!({"tool_name":"Read", "session_id":format!("codex-{}", event["session_id"].as_str().unwrap_or("unknown")),
         "tool_input":{"file_path":path}});
     hook::decide_for(&adapted.to_string(), &config, root, true)

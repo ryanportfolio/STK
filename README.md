@@ -27,7 +27,7 @@ Select a client with `--claude` or `--codex`. Preview with `--dry-run`; remove S
 
 | Client | Reads intercepted | Repeated large reads |
 | --- | --- | --- |
-| [Claude Code](src/hook.rs) | Native `Read` calls | Asking again for an unchanged file returns the whole file. |
+| [Claude Code](src/hook.rs) | Native `Read` calls | Asking again for an unchanged file up to 4 MiB returns the whole file (with the default `dedup = true`). |
 | [Codex](src/codex.rs) | Simple `cat`, `rtk read`, and `Get-Content` calls | Returns the outline again, preserving access across subagents and compaction. |
 
 Codex passes through pipelines, scripts, interpolation, multiple paths, and unfamiliar flags. STK passes through files it cannot analyze. [Exact coverage](docs/usage.md#codex-coverage)

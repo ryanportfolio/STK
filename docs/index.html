@@ -50,7 +50,7 @@
 
     <div class="hero-readouts" role="list">
       <p class="well well--field" role="listitem"><span>CLAMPS</span><b id="r-clamps">0</b></p>
-      <p class="well well--field" role="listitem"><span>REPEAT READS</span><b id="r-dups">0</b></p>
+      <p class="well well--field" role="listitem"><span>REPEATS BLOCKED</span><b id="r-dups">0</b></p>
       <p class="well well--field" role="listitem"><span>BYTES AVOIDED</span><b id="r-bytes">0</b></p>
       <p class="well well--field" role="listitem"><span>EST. TOKENS</span><b id="r-tokens">0</b></p>
       <p class="well well--field" role="listitem"><span>SNAPSHOT</span><b id="r-updated">—</b></p>
@@ -105,7 +105,7 @@ stk init --auto</code></pre>
       </tbody>
     </table>
   </div>
-  <p class="section-body wide">Default threshold: 16 KiB. Small files, scoped reads, binaries, and unsupported commands pass through. Repeat-read suppression applies to Claude Code only.</p>
+  <p class="section-body wide">Default threshold: 16 KiB, or 40 KiB for Markdown. Small files, scoped reads, binaries, and unsupported commands pass through. In Claude Code, asking again for an unchanged file (up to 4 MiB) in the same session returns the whole file; Codex gets the outline again. Older versions blocked those repeats; the repeats-blocked counter keeps that history.</p>
 </section>
 
 

@@ -48,7 +48,7 @@ stk read src/pipeline.ts --offset 1
 
 Offsets are 1-based. Either range flag bypasses outlining; `--offset 1` returns the entire file. Small and excluded files are returned unchanged. Binary or oversized files that cannot be outlined also pass through. Missing files and zero offsets or limits produce an error. An offset beyond the end of the file returns empty output.
 
-Codex dedup is disabled: subagents can share a session ID, and compaction can discard an earlier outline. Returning the map again preserves access. In Claude, the first whole-file `Read` of a large file gets the outline; asking again for the same unchanged file in the same session returns the whole file. A scoped read always bypasses the outline.
+Codex dedup is disabled: subagents can share a session ID, and compaction can discard an earlier outline. Returning the map again preserves access. In Claude, the first whole-file `Read` of a large file gets the outline; asking again for the same unchanged file in the same session returns the whole file. This needs `dedup = true` (the default) and applies to files up to 4 MiB, the hashing limit; larger files get the outline every time, and a `Read` with `offset` and `limit` recovers their content. A scoped read always bypasses the outline.
 
 ## Usage
 
