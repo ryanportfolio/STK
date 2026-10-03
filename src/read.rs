@@ -49,7 +49,8 @@ pub fn read_to(
         return Ok(());
     }
     let name = path.to_string_lossy();
-    if meta.len() <= cfg.clamp_threshold
+    let threshold = cfg.threshold_for(&name);
+    if meta.len() <= threshold
         || meta.len() > OUTLINE_MAX_BYTES
         || cfg.is_excluded(&name)
         || outline::is_image_pdf_or_notebook(&name)
@@ -70,7 +71,7 @@ pub fn read_to(
                     &name,
                     text,
                     bytes.len() as u64,
-                    cfg.clamp_threshold,
+                    threshold,
                     cfg.outline_max_lines,
                     true
                 )

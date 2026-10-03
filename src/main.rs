@@ -108,6 +108,7 @@ Requirements:
 
 Tune behavior via %APPDATA%\stk\config.toml (all keys optional):
   clamp_threshold = 16384      # bytes
+  markdown_clamp_threshold = 40960  # bytes, .md and .markdown
   outline_max_lines = 80
   dedup = true
   exclude = ["*.lock"]
@@ -146,7 +147,7 @@ fn main() {
                         &path,
                         &content,
                         size,
-                        cfg.clamp_threshold,
+                        cfg.threshold_for(&path),
                         cfg.outline_max_lines
                     )
                 );
@@ -209,6 +210,7 @@ fn main() {
             println!("store root:  {}", config::store_root().display());
             println!();
             println!("clamp_threshold   = {}", cfg.clamp_threshold);
+            println!("markdown_clamp_threshold = {}", cfg.markdown_clamp_threshold);
             println!("outline_max_lines = {}", cfg.outline_max_lines);
             println!("dedup             = {}", cfg.dedup);
             println!("exclude           = {:?}", cfg.exclude);

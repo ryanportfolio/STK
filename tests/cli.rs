@@ -121,7 +121,7 @@ fn both_hooks_and_range_recovery_in_real_processes() {
     success(&output);
     assert_eq!(output.stdout, content.as_bytes());
     let repeat = run(root, &["hook", "claude"], Some(&claude));
-    assert!(String::from_utf8_lossy(&repeat.stdout).contains("file unchanged"));
+    assert!(repeat.stdout.is_empty(), "repeat whole-file read passes through");
     let repeat = run(root, &["hook", "codex"], Some(&codex));
     assert!(String::from_utf8_lossy(&repeat.stdout).contains("stk clamp:"));
 }

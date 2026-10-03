@@ -48,7 +48,7 @@ stk read src/pipeline.ts --offset 1
 
 Offsets are 1-based. Either range flag bypasses outlining; `--offset 1` returns the entire file. Small and excluded files are returned unchanged. Binary or oversized files that cannot be outlined also pass through. Missing files and zero offsets or limits produce an error. An offset beyond the end of the file returns empty output.
 
-Codex dedup is disabled: subagents can share a session ID, and compaction can discard an earlier outline. Returning the map again preserves access. Claude retains its existing session dedup behavior; a scoped read always bypasses it.
+Codex dedup is disabled: subagents can share a session ID, and compaction can discard an earlier outline. Returning the map again preserves access. In Claude, the first whole-file `Read` of a large file gets the outline; asking again for the same unchanged file in the same session returns the whole file. This needs `dedup = true` (the default) and applies to files up to 4 MiB, the hashing limit; larger files get the outline every time, and a `Read` with `offset` and `limit` recovers their content. A scoped read always bypasses the outline.
 
 ## Usage
 
@@ -59,7 +59,7 @@ Codex dedup is disabled: subagents can share a session ID, and compaction can di
 | `stk read <path>` | Read a small file or outline a large file. |
 | `stk read <path> --offset 100 --limit 40` | Return an exact line range. |
 | `stk outline <path>` | Print the outline for a file by hand. |
-| `stk gain` | Savings so far: clamps, dedup hits, bytes avoided, estimated tokens. |
+| `stk gain` | Savings so far: clamps, dedup hits (from older versions), bytes avoided, estimated tokens. |
 | `stk gain --json` | Same, machine-readable (totals + per-day series) for dashboards. |
 | `stk config` | Show active config and store location. |
 
@@ -69,8 +69,9 @@ All optional, via `stk`'s config file (path shown by `stk config`):
 
 ```toml
 clamp_threshold   = 16384      # bytes; files at or below this always pass through
+markdown_clamp_threshold = 40960  # bytes for .md/.markdown; never below clamp_threshold
 outline_max_lines = 80         # cap on outline length
-dedup             = true       # Claude session dedup; disabled for Codex
+dedup             = true       # Claude: a repeated whole-file Read passes through; disabled for Codex
 exclude           = ["*.lock"] # globs that always pass through untouched
 ```
 

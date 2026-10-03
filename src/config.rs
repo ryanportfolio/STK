@@ -18,9 +18,14 @@ use std::path::PathBuf;
 pub struct Config {
     /// Files at or under this size (bytes) are always allowed. Default 16 KiB.
     pub clamp_threshold: u64,
+    /// Threshold for Markdown (`.md`, `.markdown`); never below
+    /// `clamp_threshold`. Default 40 KiB: skills, plans and design docs are
+    /// read whole, so an outline only adds a call.
+    pub markdown_clamp_threshold: u64,
     /// Hard cap on outline entry lines. Default 80.
     pub outline_max_lines: usize,
-    /// Enable the same-session duplicate-read deny layer. Default true.
+    /// Same-session repeat layer: a second whole-file read of an unchanged
+    /// file passes through instead of getting the outline again. Default true.
     pub dedup: bool,
     /// Glob patterns always allowed through (e.g. ["*.lock"]).
     pub exclude: Vec<String>,
@@ -30,6 +35,7 @@ impl Default for Config {
     fn default() -> Self {
         Config {
             clamp_threshold: 16384,
+            markdown_clamp_threshold: 40960,
             outline_max_lines: 80,
             dedup: true,
             exclude: Vec::new(),
@@ -54,6 +60,17 @@ impl Config {
         match std::fs::read_to_string(&path) {
             Ok(text) => toml::from_str(&text).unwrap_or_default(),
             Err(_) => Config::default(),
+        }
+    }
+
+    /// Size (bytes) at or under which `file_path` is always allowed.
+    pub fn threshold_for(&self, file_path: &str) -> u64 {
+        let ext = std::path::Path::new(file_path)
+            .extension()
+            .map(|e| e.to_string_lossy().to_lowercase());
+        match ext.as_deref() {
+            Some("md" | "markdown") => self.clamp_threshold.max(self.markdown_clamp_threshold),
+            _ => self.clamp_threshold,
         }
     }
 
@@ -121,9 +138,20 @@ mod tests {
     fn defaults() {
         let c = Config::default();
         assert_eq!(c.clamp_threshold, 16384);
+        assert_eq!(c.markdown_clamp_threshold, 40960);
         assert_eq!(c.outline_max_lines, 80);
         assert!(c.dedup);
         assert!(c.exclude.is_empty());
+    }
+
+    #[test]
+    fn markdown_threshold_applies_to_markdown_only_and_never_lowers() {
+        let c = Config::default();
+        assert_eq!(c.threshold_for("C:\\repo\\.claude\\skills\\x\\SKILL.md"), 40960);
+        assert_eq!(c.threshold_for("C:\\repo\\notes.MARKDOWN"), 40960);
+        assert_eq!(c.threshold_for("C:\\repo\\main.rs"), 16384);
+        let c: Config = toml::from_str("clamp_threshold = 65536").unwrap();
+        assert_eq!(c.threshold_for("a.md"), 65536);
     }
 
     #[test]

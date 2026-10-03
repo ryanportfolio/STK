@@ -39,8 +39,6 @@ struct ToolInput {
 /// stalls on a multi-hundred-MB text file.
 pub const OUTLINE_MAX_BYTES: u64 = 8 * 1024 * 1024;
 
-pub const DUP_REASON: &str = "stk: file unchanged since stk last saw it this session (hash match). Re-read with offset/limit if you need to re-check a specific range.";
-
 /// Build the deny JSON payload (the golden output contract).
 pub fn deny_json(reason: &str) -> String {
     json!({
@@ -107,7 +105,8 @@ pub fn decide_for(raw_input: &str, config: &Config, store_root: PathBuf, codex: 
         .unwrap_or_default();
 
     // Rule 4: small file -> allow + record hash.
-    if size <= config.clamp_threshold {
+    let threshold = config.threshold_for(&file_path);
+    if size <= threshold {
         let _ = store.record_session(
             &input.session_id,
             &SessionRecord {
@@ -121,7 +120,9 @@ pub fn decide_for(raw_input: &str, config: &Config, store_root: PathBuf, codex: 
         return None;
     }
 
-    // Rule 5: same path + same content hash already recorded this session -> deny (dup).
+    // Rule 5: same path + same content hash already recorded this session ->
+    // allow. The agent already got the outline and still asks for the whole
+    // file, or lost it to compaction; another outline would only cost a call.
     if config.dedup && !hash.is_empty()
         && store.latest_hash(&input.session_id, &file_path).as_deref() == Some(hash.as_str()) {
             let _ = store.record_session(
@@ -130,19 +131,11 @@ pub fn decide_for(raw_input: &str, config: &Config, store_root: PathBuf, codex: 
                     ts: store::now_ts(),
                     file: file_path.clone(),
                     size,
-                    hash: hash.clone(),
-                    action: "dup".into(),
+                    hash,
+                    action: "repeat".into(),
                 },
             );
-            let _ = store.record_stat(&StatRecord {
-                client: if codex { "codex" } else { "claude" }.into(),
-                ts: store::now_ts(),
-                file: file_path.clone(),
-                file_bytes: size,
-                sent_bytes: DUP_REASON.len() as u64,
-                kind: "dup".into(),
-            });
-            return Some(deny_json(DUP_REASON));
+            return None;
     }
 
     // Rule 6: big file, first sight -> deny with outline.
@@ -156,7 +149,7 @@ pub fn decide_for(raw_input: &str, config: &Config, store_root: PathBuf, codex: 
         &file_path,
         &text,
         size,
-        config.clamp_threshold,
+        threshold,
         config.outline_max_lines,
         codex,
     );
@@ -287,7 +280,7 @@ mod tests {
     }
 
     #[test]
-    fn rule5_dup_denies_with_dup_reason() {
+    fn rule5_repeat_allows_whole_file() {
         let dir = tempdir().unwrap();
         let big = "fn main() {}\n".repeat(3000); // > 16 KiB
         let path = write_file(dir.path(), "big.rs", big.as_bytes());
@@ -296,9 +289,9 @@ mod tests {
         // First sight: clamp (outline deny).
         let first = decide(&input_json("s5", &path), &cfg(), root.clone()).unwrap();
         assert!(first.contains("stk clamp:"));
-        // Second sight, unchanged: dup deny.
-        let second = decide(&input_json("s5", &path), &cfg(), root.clone()).unwrap();
-        assert!(second.contains("file unchanged since stk last saw it"), "{second}");
+        // Second and later sights, unchanged: the whole file passes through.
+        assert_eq!(decide(&input_json("s5", &path), &cfg(), root.clone()), None);
+        assert_eq!(decide(&input_json("s5", &path), &cfg(), root.clone()), None);
         // Different session: back to outline clamp.
         let other = decide(&input_json("other", &path), &cfg(), root.clone()).unwrap();
         assert!(other.contains("stk clamp:"));
@@ -334,6 +327,19 @@ mod tests {
         assert_eq!(stats.len(), 1);
         assert_eq!(stats[0].kind, "clamp");
         assert!(stats[0].file_bytes > stats[0].sent_bytes);
+    }
+
+    #[test]
+    fn markdown_uses_markdown_threshold() {
+        let dir = tempdir().unwrap();
+        let root = dir.path().join("store");
+        let md = "## Step\n\nDo the thing.\n".repeat(1200); // ~27 KiB
+        let skill = write_file(dir.path(), "SKILL.md", md.as_bytes());
+        assert_eq!(decide(&input_json("md", &skill), &cfg(), root.clone()), None);
+        let big = "## Step\n\nDo the thing.\n".repeat(2000); // ~45 KiB
+        let doc = write_file(dir.path(), "design.md", big.as_bytes());
+        let out = decide(&input_json("md", &doc), &cfg(), root).unwrap();
+        assert!(out.contains("(threshold 40 KB)"), "{out}");
     }
 
     #[test]

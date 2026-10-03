@@ -22,7 +22,7 @@ pub struct SessionRecord {
     pub file: String,
     pub size: u64,
     pub hash: String,
-    pub action: String, // "allow" | "clamp" | "dup"
+    pub action: String, // "allow" | "clamp" | "repeat" (legacy: "dup")
 }
 
 #[derive(Debug, Serialize, Deserialize)]
