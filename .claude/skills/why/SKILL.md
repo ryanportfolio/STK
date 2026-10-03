@@ -1,13 +1,12 @@
 ---
-description: Use only when the user explicitly invokes /why to challenge the assistant's immediately prior recommendation; never trigger from ordinary why questions or paraphrases.
-disable-model-invocation: true
+description: Pressure-test a recommendation with one fresh reviewer. Use when the user types /why, or before you present your own weighty recommendation (hard to undo, two or more real options, or real time or money at stake). Never trigger from ordinary why questions or paraphrases.
 ---
 
 # Why
 
 The user typed `/why`. They just got a recommendation from you — a library, an approach, a file layout, a fix, a tradeoff call — and want a quick, honest, well-rounded look at it: why it matters, the real reasoning, and, critically, what it might be missing. They can already see the recommendation. Don't re-explain the conversation. Explain and pressure-test the *pick*.
 
-**Trigger:** this skill runs ONLY on the explicit `/why` command. The word "why" used normally in conversation is not a trigger — never fire on it.
+**Triggers:** the explicit `/why` command, or self-run before you present a weighty recommendation (see "Self-run mode" below and the caveman skill's questions rule). The word "why" used normally in conversation is not a trigger — never fire on it.
 
 **Lightweight by design.** This is not `/impartial-review` (no five-bucket panel, no broad audit). But a model reviewing its *own* previous turn tends to rubber-stamp — same blind spots, same biases. So `/why` borrows exactly one trick from real review: a single fresh subagent with no memory of this session, to get genuine distance on the weak spots. Everything else you do yourself, fast.
 
@@ -42,6 +41,15 @@ Dispatch **one** subagent via the Agent tool for the "what it could be missing" 
 - **One agent only.** If fresh dispatch is unavailable or fails, disclose that the independent check did not complete. Useful personal critique may continue, clearly labeled as self-review; it cannot complete the independent gate. A completed reviewer finding no valid criticism is a valid result, not a dispatch failure.
 
 Then **you** own the synthesis: take the subagent's findings, drop anything off-base (it lacks full repo context), and fold the rest into the review below. Don't relay its raw output — integrate it.
+
+## Self-run mode
+
+When you run this yourself before presenting a pick:
+
+- The pick under review is the recommendation you are about to give, not your previous turn. Feed the subagent that draft plus the user message that prompted it.
+- Do Steps 2 and 3 as written.
+- Skip the Step 4 review format. Present the refined recommendation in the session's normal style with one added line: `Pressure-tested (/why): <what the reviewer changed or confirmed>`. If the check overturns the pick, lead with the new pick and say why on that line.
+- No file edits for the pick until the user answers.
 
 ## Step 4: Write the review
 
