@@ -108,7 +108,7 @@ Requirements:
 
 Tune behavior via %APPDATA%\stk\config.toml (all keys optional):
   clamp_threshold = 16384      # bytes
-  markdown_clamp_threshold = 40960  # bytes, .md and .markdown
+  markdown_clamp_threshold = 51200  # bytes, .md and .markdown
   outline_max_lines = 80
   dedup = true
   exclude = ["*.lock"]

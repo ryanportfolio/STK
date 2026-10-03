@@ -19,7 +19,7 @@ pub struct Config {
     /// Files at or under this size (bytes) are always allowed. Default 16 KiB.
     pub clamp_threshold: u64,
     /// Threshold for Markdown (`.md`, `.markdown`); never below
-    /// `clamp_threshold`. Default 40 KiB: skills, plans and design docs are
+    /// `clamp_threshold`. Default 50 KiB: skills, plans and design docs are
     /// read whole, so an outline only adds a call.
     pub markdown_clamp_threshold: u64,
     /// Hard cap on outline entry lines. Default 80.
@@ -35,7 +35,7 @@ impl Default for Config {
     fn default() -> Self {
         Config {
             clamp_threshold: 16384,
-            markdown_clamp_threshold: 40960,
+            markdown_clamp_threshold: 51200,
             outline_max_lines: 80,
             dedup: true,
             exclude: Vec::new(),
@@ -138,7 +138,7 @@ mod tests {
     fn defaults() {
         let c = Config::default();
         assert_eq!(c.clamp_threshold, 16384);
-        assert_eq!(c.markdown_clamp_threshold, 40960);
+        assert_eq!(c.markdown_clamp_threshold, 51200);
         assert_eq!(c.outline_max_lines, 80);
         assert!(c.dedup);
         assert!(c.exclude.is_empty());
@@ -147,8 +147,8 @@ mod tests {
     #[test]
     fn markdown_threshold_applies_to_markdown_only_and_never_lowers() {
         let c = Config::default();
-        assert_eq!(c.threshold_for("C:\\repo\\.claude\\skills\\x\\SKILL.md"), 40960);
-        assert_eq!(c.threshold_for("C:\\repo\\notes.MARKDOWN"), 40960);
+        assert_eq!(c.threshold_for("C:\\repo\\.claude\\skills\\x\\SKILL.md"), 51200);
+        assert_eq!(c.threshold_for("C:\\repo\\notes.MARKDOWN"), 51200);
         assert_eq!(c.threshold_for("C:\\repo\\main.rs"), 16384);
         let c: Config = toml::from_str("clamp_threshold = 65536").unwrap();
         assert_eq!(c.threshold_for("a.md"), 65536);
