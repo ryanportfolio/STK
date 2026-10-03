@@ -1,15 +1,15 @@
 ﻿{
-    "generated_at":  "2026-10-03T10:19:03Z",
+    "generated_at":  "2026-10-03T11:19:03Z",
     "stk":  {
-                "bytes_avoided":  107763936,
+                "bytes_avoided":  107784612,
                 "caveat":  "gross bytes avoided, estimated at bytes/4; follow-up reads and overhead are excluded, so net token savings are unmeasured",
-                "clamps":  2301,
+                "clamps":  2302,
                 "clients":  {
                                 "claude":  {
-                                               "bytes_avoided":  50021075,
-                                               "clamps":  993,
+                                               "bytes_avoided":  50041751,
+                                               "clamps":  994,
                                                "dup_hits":  299,
-                                               "est_tokens":  12505268
+                                               "est_tokens":  12510437
                                            },
                                 "codex":  {
                                               "bytes_avoided":  13775325,
@@ -434,17 +434,17 @@
                                  "dup_hits":  22
                              },
                              {
-                                 "bytes_avoided":  2282253,
-                                 "clamps":  63,
+                                 "bytes_avoided":  2302929,
+                                 "clamps":  64,
                                  "date":  "2026-10-03",
                                  "dup_hits":  2
                              }
                          ],
                 "dup_hits":  650,
-                "est_tokens":  26940984
+                "est_tokens":  26946153
             },
     "rtk":  {
-                "commands":  297351,
+                "commands":  297482,
                 "tokens_saved":  "320.4M",
                 "reduction":  "43.2%",
                 "source":  "rtk gain (RTK\u0027s own accounting)"
