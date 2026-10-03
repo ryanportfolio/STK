@@ -14,7 +14,7 @@ Read `.claude/skills/codex-fullreview/SKILL.md` and follow its complete executio
 | Effort | `medium`, regardless of diff size |
 | Run directory prefix | `.tmp/astra-fullreview-` |
 
-Skip the newest-Sol check in `codex-fullreview` Step 1; this entrypoint never swaps Astra for Sol. Honor an explicit user model/effort choice. Confirm supported local options before inference; a model identifier in this file is not proof of availability. `$ARGUMENTS` carries scope as in `codex-fullreview`. Usage is higher than `astra-review`; say so before launch.
+Skip the newest-Sol check in `codex-fullreview` Step 1; this entrypoint never swaps Astra for Sol. Honor an explicit user model/effort choice. Confirm supported local options before inference; a model identifier in this file is not proof of availability. `$ARGUMENTS` carries scope as in `codex-fullreview`.
 
 Example for a branch diff after creating a fresh `$RUN` directory (POSIX shell):
 

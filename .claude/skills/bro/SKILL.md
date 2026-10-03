@@ -8,7 +8,7 @@ description: "Plain-language restatement. Use on /bro anywhere in a message, \"p
 Both uses follow these rules:
 
 - Keep every fact, number, caveat, link, path, and command. Before sending, check each one against the original. Add no claim the original did not make.
-- Full sentences for this one reply (the caveman confusion carve-out), then return to the standing style.
+- Full sentences for this one reply (an explicit request overrides caveman), then return to the standing style.
 - Everyday words instead of jargon. At most one term keeps a gloss; every other term gets replaced by a plain word or cut.
 - Come in shorter than the original.
 
