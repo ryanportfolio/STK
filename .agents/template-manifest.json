@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "template": "ryanportfolio/Harness-Firmware",
+  "requiredFiles": [
+    ".agents/template-manifest.json",
+    "AGENTS.md",
+    ".agents/skills/init-project/SKILL.md",
+    ".claude/skills/init-project/SKILL.md",
+    ".claude/scripts/sync-codex-skills.mjs"
+  ],
+  "projectPaths": [
+    ".agents",
+    ".claude",
+    ".gitattributes",
+    ".gitignore",
+    ".mcp.json",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/codex-skills.md",
+    "scripts/lib"
+  ],
+  "templateOnly": [
+    ".claude-plugin",
+    ".github/ISSUE_TEMPLATE",
+    ".github/workflows/validate-template.yml",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "GUIDE.md",
+    "LICENSE",
+    "README.md",
+    "assets/diagrams",
+    "assets/readme",
+    "bootstrap",
+    "docs/research",
+    "docs/specs",
+    "docs/superpowers",
+    "scripts/diagrams",
+    "scripts/readme"
+  ],
+  "readmeStub": "# {name}\n",
+  "skills": {
+    "groups": [
+      {
+        "id": "core",
+        "label": "Core workflows",
+        "description": "Setup, memory, maintenance, and everyday project control",
+        "skills": ["init-project", "recall", "addskill", "sync-starter", "optimize-context", "refine", "adopt-repo", "wrapup", "servers"]
+      },
+      {
+        "id": "discipline",
+        "label": "Quality disciplines",
+        "description": "Planning, review, and dependable long-form execution",
+        "skills": ["brainstorming", "writing-plans", "impartial-review", "perf-loop", "long-horizon", "long-horizon-workflows", "babysit-ci", "codex-review", "external-review", "astra-review", "codex-fullreview", "opus-fullreview", "astra-fullreview", "merge", "claude-review", "dare"]
+      },
+      {
+        "id": "specialist",
+        "label": "Specialist tools",
+        "description": "Focused modes for design, writing, critique, and delivery",
+        "skills": ["fable-mode", "wow-loop", "showpiece", "arena", "lab", "advocate", "why", "enhance-prompt", "handoff-audit", "compact-review", "writing", "forge-repo-ui-skill", "caveman", "bro", "session-hub"]
+      }
+    ],
+    "required": ["external-review", "init-project"],
+    "dependencies": {
+      "astra-fullreview": ["codex-fullreview", "impartial-review"],
+      "astra-review": ["codex-review", "external-review"],
+      "caveman": ["why"],
+      "codex-fullreview": ["impartial-review"],
+      "codex-review": ["external-review"],
+      "merge": ["codex-fullreview", "codex-review"],
+      "opus-fullreview": ["impartial-review"],
+      "wrapup": ["servers"]
+    },
+    "presets": {
+      "minimal": {
+        "omit": ["advocate", "enhance-prompt", "fable-mode", "forge-repo-ui-skill", "handoff-audit", "lab"]
+      }
+    }
+  }
+}
