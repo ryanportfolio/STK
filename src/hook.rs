@@ -336,10 +336,10 @@ mod tests {
         let md = "## Step\n\nDo the thing.\n".repeat(1200); // ~27 KiB
         let skill = write_file(dir.path(), "SKILL.md", md.as_bytes());
         assert_eq!(decide(&input_json("md", &skill), &cfg(), root.clone()), None);
-        let big = "## Step\n\nDo the thing.\n".repeat(2000); // ~45 KiB
+        let big = "## Step\n\nDo the thing.\n".repeat(2500); // ~56 KiB
         let doc = write_file(dir.path(), "design.md", big.as_bytes());
         let out = decide(&input_json("md", &doc), &cfg(), root).unwrap();
-        assert!(out.contains("(threshold 40 KB)"), "{out}");
+        assert!(out.contains("(threshold 50 KB)"), "{out}");
     }
 
     #[test]

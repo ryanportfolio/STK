@@ -52,7 +52,7 @@ Decision logic (in order):
 2. File missing / unreadable / not a regular file → **allow** (let Read produce its own error).
 3. File is binary (NUL byte in first 8KB) or an image/PDF/notebook extension → **allow**.
 4. File size ≤ `clamp_threshold` (default 16 KiB; Markdown uses `markdown_clamp_threshold`,
-   default 40 KiB) → **allow** + record hash in session store.
+   default 50 KiB) → **allow** + record hash in session store.
 5. Same `file_path` + same content hash already recorded this `session_id` → **allow**. The
    agent already got the outline and still asks for the whole file, or lost it to compaction;
    another outline would only cost a call. Disabled when `dedup = false`.
@@ -127,7 +127,7 @@ stk config             # print active config (TOML at %APPDATA%\stk\config.toml,
 ```
 
 Config keys: `clamp_threshold` (bytes, default 16384), `markdown_clamp_threshold` (bytes for
-`.md`/`.markdown`, default 40960, never below `clamp_threshold`), `outline_max_lines` (80),
+`.md`/`.markdown`, default 51200, never below `clamp_threshold`), `outline_max_lines` (80),
 `dedup` (bool, true: a repeated whole-file read of an unchanged file passes through), `exclude`
 (glob list, e.g. `["*.lock"]` always allowed through).
 

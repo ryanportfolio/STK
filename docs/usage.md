@@ -69,7 +69,7 @@ All optional, via `stk`'s config file (path shown by `stk config`):
 
 ```toml
 clamp_threshold   = 16384      # bytes; files at or below this always pass through
-markdown_clamp_threshold = 40960  # bytes for .md/.markdown; never below clamp_threshold
+markdown_clamp_threshold = 51200  # bytes for .md/.markdown; never below clamp_threshold
 outline_max_lines = 80         # cap on outline length
 dedup             = true       # Claude: a repeated whole-file Read passes through; disabled for Codex
 exclude           = ["*.lock"] # globs that always pass through untouched
