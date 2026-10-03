@@ -42,7 +42,7 @@ blocked that read and returned an outline. The next tool call recovered lines
 spaces. The Windows Codex check caught a missing `commandWindows` entry during
 development; the installer now emits it explicitly.
 
-Executable tests also verify byte-preserving range recovery, Claude dedup,
+Executable tests also verify byte-preserving range recovery, Claude repeat reads,
 Codex repeated outlines, scoped reads, exclusions, binary pass-through,
 malformed settings, backups, preservation of other hooks, idempotent setup,
 and uninstall.

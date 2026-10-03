@@ -51,9 +51,11 @@ Decision logic (in order):
 1. `tool_input` has `offset` or `limit` → **allow** (model already scoping; never fight it).
 2. File missing / unreadable / not a regular file → **allow** (let Read produce its own error).
 3. File is binary (NUL byte in first 8KB) or an image/PDF/notebook extension → **allow**.
-4. File size ≤ `clamp_threshold` (default 16 KiB) → **allow** + record hash in session store.
-5. Same `file_path` + same content hash already recorded this `session_id` → **deny**, reason:
-   `"stk: file unchanged since stk last saw it this session (hash match). Re-read with offset/limit if you need to re-check a specific range."`
+4. File size ≤ `clamp_threshold` (default 16 KiB; Markdown uses `markdown_clamp_threshold`,
+   default 40 KiB) → **allow** + record hash in session store.
+5. Same `file_path` + same content hash already recorded this `session_id` → **allow**. The
+   agent already got the outline and still asks for the whole file, or lost it to compaction;
+   another outline would only cost a call. Disabled when `dedup = false`.
 6. Else (big file, first sight) → **deny**, reason = generated **outline** + footer.
 
 Allow = exit 0, no stdout (passthrough). Deny = exit 0, stdout JSON:
@@ -106,7 +108,8 @@ Outline generator (deterministic, no model):
 ## Session store
 
 `%LOCALAPPDATA%\stk\sessions\<session_id>.jsonl` (append-only records):
-`{"ts":…,"file":…,"size":…,"hash":"sha1 of content","action":"allow|clamp|dup"}`
+`{"ts":…,"file":…,"size":…,"hash":"sha1 of content","action":"allow|clamp|repeat"}`
+(older stores may also contain `dup` records from the earlier deny behavior).
 Hash computed only for files ≤ 4 MiB (else skip dup layer). Store read = scan lines for
 latest record per path. Prune: on startup, delete session files older than 14 days.
 
@@ -123,8 +126,10 @@ stk init               # print the settings.json hook snippet + install instruct
 stk config             # print active config (TOML at %APPDATA%\stk\config.toml, all keys optional)
 ```
 
-Config keys: `clamp_threshold` (bytes, default 16384), `outline_max_lines` (80),
-`dedup` (bool, true), `exclude` (glob list, e.g. `["*.lock"]` always allowed through).
+Config keys: `clamp_threshold` (bytes, default 16384), `markdown_clamp_threshold` (bytes for
+`.md`/`.markdown`, default 40960, never below `clamp_threshold`), `outline_max_lines` (80),
+`dedup` (bool, true: a repeated whole-file read of an unchanged file passes through), `exclude`
+(glob list, e.g. `["*.lock"]` always allowed through).
 
 ## Non-goals (v1)
 
