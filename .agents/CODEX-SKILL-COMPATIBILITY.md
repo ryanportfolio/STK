@@ -22,8 +22,8 @@ for comparison, backup, reconciliation, and discovery checks.
 
 | Status | Skills |
 |---|---|
-| Native | `addskill`, `babysit-ci`, `brainstorming`, `bro`, `caveman`, `enhance-prompt`, `fable-mode`, `forge-repo-ui-skill`, `handoff-audit`, `humanizer`, `purposeful-writing`, `recall`, `refine`, `servers`, `session-hub`, `showpiece`, `wrapup`, `writing`, `writing-plans` |
-| Adapted | `astra-review`, `claude-review`, `codex-review`, `init-project`, `lab`, `optimize-context`, `sync-starter` |
+| Native | `addskill`, `babysit-ci`, `brainstorming`, `bro`, `caveman`, `enhance-prompt`, `external-review`, `fable-mode`, `forge-repo-ui-skill`, `handoff-audit`, `humanizer`, `purposeful-writing`, `recall`, `refine`, `servers`, `session-hub`, `showpiece`, `wrapup`, `writing`, `writing-plans` |
+| Adapted | `astra-review`, `claude-review`, `codex-review`, `deep-plan`, `init-project`, `lab`, `optimize-context`, `opus-fullreview`, `sync-starter` |
 | Capability-gated | `advocate`, `arena`, `dare`, `impartial-review`, `long-horizon`, `perf-loop`, `why`, `wow-loop` |
 | Dangerous | `adopt-repo` |
 | Claude-only | `astra-fullreview`, `codex-fullreview`, `compact-review`, `long-horizon-workflows`, `merge` |

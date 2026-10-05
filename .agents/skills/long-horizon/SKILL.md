@@ -91,7 +91,9 @@ stops, not waiting on batch. Integrate after whole batch audited:
 4. Separate-workspace verdicts don't prove steps work together or survive workspace removal (e.g. link into removed worktree). After removal, one fresh auditor runs every applied round's done-check in main workspace before any counts as verified. Step failing there → Remaining w/ that output; its applied paths → state w/ revert-or-keep decision.
 
 In-round, executor runs independent reads/searches/commands at once; read-only
-helpers OK if runtime allows. Parallel writers needed → split into steps in Remaining, run
+helpers OK if runtime allows. Executor's turn ending = round over → wait for every helper
+result (incl. `arena` inside executor) before stopping; helper still running at stop →
+output lost. Parallel writers needed → split into steps in Remaining, run
 as parallel rounds.
 
 ## Each round
@@ -128,7 +130,9 @@ as parallel rounds.
    never claim fresh independent audit. Honor explicit user model choice, else session
    model. Requested model unavailable → disclose, never silently substitute. Executor
    implements, verifies only its step; returns changed paths, commands/results, blockers.
-   Can't edit Manager state or dispatch agents.
+   Can't edit Manager state or dispatch agents. Returns w/o promised artifacts, or says
+   it's waiting on helpers → send it follow-up input via exposed agent tools, not new
+   round or failed audit.
 3. **Audit after execution stops.** Separate fresh agent gets prewritten auditor brief
    byte for byte, or by path if agent first checks recorded hash. Never rewrite after
    reading executor output; Plan defect → next round. Explicit user amendment → reconcile

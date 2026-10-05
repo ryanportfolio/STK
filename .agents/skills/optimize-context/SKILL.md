@@ -28,7 +28,7 @@ node .claude/scripts/sync-codex-skills.mjs --check
 node .claude/scripts/test-codex-contract.mjs
 ```
 
-`--check` fails on an unregistered skill or a Claude skill changed since its Codex port was last baselined. `test-codex-contract.mjs` checks that Codex routing metadata stays within its context budget. Include the `.agents/skills/` and `.agents/skill-sources.json` changes with the edit.
+`--check` warns about an unregistered skill or a Claude skill changed since its Codex port was last baselined. `test-codex-contract.mjs` checks that Codex routing metadata stays within its context budget. Include the `.agents/skills/` and `.agents/skill-sources.json` changes with the edit.
 
 ## Verify and report
 
