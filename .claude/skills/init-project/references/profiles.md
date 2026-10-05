@@ -16,13 +16,15 @@ listed under `skills.required`. Caveman can also be omitted if it is not the con
 prose default. Preserve skills referenced by active instructions and user customizations.
 Show the concrete selection before applying it unless already approved. Prefer reversible
 discovery settings over deleting skill folders. A request for minimal configuration does
-not by itself authorize deleting custom resources.
+not by itself authorize deleting custom resources. A profile or preset never deletes or
+replaces a skill listed in `.agents/skill-locks.json`; a lock file that exists but cannot be
+read or parsed stops the profile change with the error.
 
 In this starter, inspect the Codex sync check and ownership registry before applying
 settings: Claude legacy skillOverrides and Codex .agents/skill-modes.json have distinct
 roles. Preserve explicit native ownership and intentional disables. Each Claude skill is
 registered `native`, with a maintained port in `.agents/skills/<name>/`, or `disabled`;
-`node .claude/scripts/sync-codex-skills.mjs --check` enforces this and never generates or
+`node .claude/scripts/sync-codex-skills.mjs --check` warns when one is not and never generates or
 restores Codex bodies/resources.
 Use the runtime's supported setting only after verifying it in installed sources. Record
 what should disappear from discovery and verify after reload; source edits alone do not
@@ -34,12 +36,16 @@ Preserve the user's established choice; otherwise explain the inherited Caveman 
 briefly and offer ultra/full/lite/normal if they want to change it. Code, commands, errors,
 security explanations and irreversible confirmations retain normal technical prose.
 
-For Claude, the project default may be present in CLAUDE.md, the session-start hook, and
-the output style (`.claude/output-styles/caveman.md` plus `outputStyle` in
-`.claude/settings.json`). Inspect all three. This starter marks hook blocks caveman:directive,
-caveman:reminder, and caveman:call. Change their level together with the style file's
-default for full/lite, or for normal remove those default blocks, the default section, the
-`outputStyle` key, and the style file. Keep the skill available for explicit use.
+For Claude, the project default may be present in CLAUDE.md, the session-start hook, the
+output style (`.claude/output-styles/caveman.md` plus `outputStyle` in
+`.claude/settings.json`), and the subagent hook (`.claude/hooks/subagent-start.sh` plus its
+`SubagentStart` entry in `.claude/settings.json`). Inspect all four. This starter marks hook
+blocks caveman:directive, caveman:reminder, and caveman:call. Change their level together
+with the style file's default for full/lite, editing the subagent hook's rules to match, or
+for normal remove those default blocks, the default section, the `outputStyle` key, the
+style file, and the subagent hook's writing-rule lines. Keep the subagent hook and its
+`SubagentStart` entry for its rule that subagents collect their helpers' results. Keep the
+skill available for explicit use.
 Check remaining references and run bash -n on an edited shell hook; do not execute the
 hook in Codex. For Codex, update the AGENTS.md default it actually reads; Claude hook
 changes do not configure Codex. If both runtimes are in scope, keep both defaults aligned.

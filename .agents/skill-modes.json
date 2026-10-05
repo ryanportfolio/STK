@@ -40,6 +40,9 @@
     "wow-loop": "native",
     "wrapup": "native",
     "writing": "native",
-    "writing-plans": "native"
+    "writing-plans": "native",
+    "deep-plan": "native",
+    "external-review": "native",
+    "opus-fullreview": "native"
   }
 }

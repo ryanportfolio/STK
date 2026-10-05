@@ -35,7 +35,15 @@ import path from "node:path";
 const POSIX = process.platform !== "win32";
 const slash = (p) => (POSIX ? p : p.replaceAll("\\", "/"));
 const sha256 = (data) => createHash("sha256").update(data).digest("hex");
-const within = (p, prefix) => p === prefix || p.startsWith(`${prefix}/`);
+// Path comparison key: lower case when the repository ignores case (core.ignorecase, the Windows
+// default), as the file system does. Set once the root is known.
+let FOLD = (p) => p;
+const within = (p, prefix) => {
+  const [a, b] = [FOLD(p), FOLD(prefix)];
+  return a === b || a.startsWith(`${b}/`);
+};
+// True for a path.relative result that leaves the folder ("..", "../x"); "..reviews" stays inside.
+const leaves = (rel) => rel === ".." || rel.startsWith(`..${path.sep}`) || rel.startsWith("../") || path.isAbsolute(rel);
 const MAX_LINES = 1800; // under the Read tool's 2000-line default page
 const CONTENT = new Set(["added", "modified", "deleted"]);
 
@@ -119,6 +127,8 @@ function collect(root, baseSha, excluded) {
   const tokens = git(root, ["diff", "--no-renames", "--name-status", "-z", baseSha, "--"]).toString("utf8").split("\0");
   for (let i = 0; i + 1 < tokens.length; i += 2) changes.set(tokens[i + 1], false);
   for (const p of git(root, ["ls-files", "--others", "--exclude-standard", "-z"]).toString("utf8").split("\0")) if (p) changes.set(p, true);
+  // Drop excluded paths before any of their content is read.
+  for (const p of changes.keys()) if (excluded.some((x) => within(p, x))) changes.delete(p);
 
   const tree = new Map();
   for (const line of git(root, ["ls-tree", "-r", "-z", "--full-tree", baseSha]).toString("utf8").split("\0")) {
@@ -317,26 +327,173 @@ function patchParts(sections, limit) {
 
 const JS = /\.(?:[cm]?[jt]sx?)$/;
 const EXTS = [".ts", ".tsx", ".mts", ".cts", ".d.ts", ".js", ".jsx", ".mjs", ".cjs", ".json"];
+// Static `import ... from "x"` and `import "x"` are found by importStatements, which bounds its
+// look-ahead; a single regex for them backtracks badly on long whitespace runs.
 const IMPORT_RES = [
-  /\bimport\s+(?:type\s+)?(?:[\w$*{}\s,]+?\s+from\s+)?["']([^"'\n]+)["']/g,
   /\bexport\s+(?:type\s+)?(?:\*(?:\s+as\s+[\w$]+)?|\{[^}]*\})\s+from\s+["']([^"'\n]+)["']/g,
   /\bimport\s*\(\s*["']([^"'\n]+)["']\s*\)/g,
   /\brequire\s*\(\s*["']([^"'\n]+)["']\s*\)/g,
 ];
 
+// Code with comments blanked out (newlines kept, so positions and line numbers hold). Strings and
+// regex literals are copied whole, so "/*" inside either is not a comment. Single and double
+// quoted strings and regex literals end at a line break; template literals span lines, and the
+// code inside their `${...}` is scanned as code. A "/" starts a regex literal where an operand is
+// expected: at the start, after an operator or opening bracket, after a keyword such as `return`,
+// or after the closing parenthesis of `if`, `while`, `for` or `with`. A "/*" never closed is not
+// a comment (that would be a syntax error), so a misread cannot blank the rest of the file.
+const REGEX_AFTER = new Set("(,=:[!&|?{};+-*%<>~^".split(""));
+const REGEX_KEYWORDS = new Set(["return", "typeof", "case", "do", "else", "in", "of", "new", "delete", "void", "throw", "yield", "await", "instanceof"]);
+const CONTROL = new Set(["if", "while", "for", "with"]);
+function stripComments(text) {
+  let out = "";
+  let quote = null;
+  // The last significant character outside comments, and the identifier it ends, if any.
+  let last;
+  let token = "";
+  let inWord = false;
+  // Open "(" with the identifier before each; true after a control statement's ")".
+  const parens = [];
+  let afterControl = false;
+  // Brace depth in code, and the depth at which each open `${` returns to its template.
+  let depth = 0;
+  const templates = [];
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quote) {
+      // Template text is blanked too: an import path is never written in backticks, so example
+      // code inside a template (generated files, fixtures) is not read as imports.
+      const keep = quote !== "`" || c === "`" || c === "\n" || (c === "$" && text[i + 1] === "{");
+      out += keep ? c : " ";
+      if (c === "\\") out += quote === "`" ? (text[++i] === "\n" ? "\n" : " ") : (text[++i] ?? "");
+      else if (quote === "`" && c === "$" && text[i + 1] === "{") {
+        out += "{";
+        i++;
+        templates.push(depth++);
+        [quote, last, token, inWord, afterControl] = [null, "{", "", false, false];
+      } else if (c === quote || (c === "\n" && quote !== "`")) quote = null;
+      continue;
+    }
+    if (c === "/" && text[i + 1] === "/") {
+      const end = text.indexOf("\n", i);
+      const stop = end < 0 ? text.length : end;
+      out += " ".repeat(stop - i);
+      i = stop - 1;
+      inWord = false;
+      continue;
+    }
+    if (c === "/" && text[i + 1] === "*") {
+      const end = text.indexOf("*/", i + 2);
+      if (end >= 0) {
+        out += text.slice(i, end + 2).replace(/[^\n]/g, " ");
+        i = end + 1;
+        inWord = false;
+        continue;
+      }
+    }
+    if (c === "/" && (last === undefined || REGEX_AFTER.has(last) || REGEX_KEYWORDS.has(token) || (last === ")" && afterControl))) {
+      let j = i + 1;
+      let inClass = false;
+      for (; j < text.length && text[j] !== "\n"; j++) {
+        if (text[j] === "\\") j++;
+        else if (text[j] === "[") inClass = true;
+        else if (text[j] === "]") inClass = false;
+        else if (text[j] === "/" && !inClass) break;
+      }
+      const stop = Math.min(j + 1, text.length);
+      out += text.slice(i, stop);
+      i = stop - 1;
+      [last, token, inWord, afterControl] = [")", "", false, false]; // a regex literal is an operand
+      continue;
+    }
+    if (c === "}" && templates.length && depth - 1 === templates.at(-1)) {
+      out += c;
+      depth--;
+      templates.pop();
+      quote = "`";
+      continue;
+    }
+    out += c;
+    if (/[\w$]/.test(c)) {
+      token = inWord ? token + c : c;
+      inWord = true;
+      last = c;
+      afterControl = false;
+      continue;
+    }
+    inWord = false;
+    if (/\s/.test(c)) continue;
+    afterControl = false;
+    if (c === "(") parens.push(token);
+    else if (c === ")") afterControl = CONTROL.has(parens.pop());
+    else if (c === "{") depth++;
+    else if (c === "}") depth = Math.max(0, depth - 1);
+    [last, token] = [c, ""];
+    if (c === '"' || c === "'" || c === "`") [quote, last] = [c, ")"]; // a string is an operand
+  }
+  return out;
+}
+
 function importsOf(text) {
-  // Line comments and comments that open a line; a "/*" inside a string such as a glob stays.
-  const code = text.replace(/^\s*\/\*[\s\S]*?\*\//gm, (m) => m.replace(/[^\n]/g, " ")).replace(/(^|\s)\/\/.*$/gm, "$1");
+  const code = stripComments(text);
+  const breaks = [];
+  for (let i = code.indexOf("\n"); i >= 0; i = code.indexOf("\n", i + 1)) breaks.push(i);
+  // 1-based line of an offset: one more than the number of line breaks before it.
+  const lineAt = (at) => {
+    let lo = 0;
+    let hi = breaks.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (breaks[mid] < at) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo + 1;
+  };
   const found = [];
   for (const re of IMPORT_RES) {
-    for (const m of code.matchAll(re)) found.push({ specifier: m[1], line: code.slice(0, m.index).split("\n").length });
+    for (const m of code.matchAll(re)) found.push({ specifier: m[1], line: lineAt(m.index) });
+  }
+  // `import "x"`, or `import <bindings> from "x"` where the bindings hold only names, braces,
+  // commas, `*` and whitespace, within LOOK characters of the keyword. A longer run is reported
+  // with a null specifier so the caller can list it as not checked.
+  const LOOK = 20000;
+  const clause = /[\w$*{},\s]/;
+  // Not after a quote, "-", "." or "$": skips text such as '--import' and obj.import.
+  for (const m of code.matchAll(/(?<![\w$.'"`-])import\b/g)) {
+    let i = m.index + 6;
+    const stop = Math.min(code.length, i + LOOK);
+    while (i < stop && /\s/.test(code[i])) i++;
+    if (code[i] === '"' || code[i] === "'") {
+      const s = /["']([^"'\n]+)["']/y;
+      s.lastIndex = i;
+      const q = s.exec(code);
+      if (q && q[0][0] === q[0].at(-1)) found.push({ specifier: q[1], line: lineAt(m.index) });
+      continue;
+    }
+    if (i === m.index + 6) continue; // no whitespace after the keyword: `import(`, `import.meta`
+    for (; i < stop && clause.test(code[i]); i++) {
+      if (code.startsWith("from", i) && /\W/.test(code[i - 1]) && !/[\w$]/.test(code[i + 4] ?? "")) {
+        const s = /from\s*["']([^"'\n]+)["']/y;
+        s.lastIndex = i;
+        const q = s.exec(code);
+        // A binding named `from` (`import { from } from "x"`) is not followed by a string.
+        if (q) {
+          found.push({ specifier: q[1], line: lineAt(m.index) });
+          break;
+        }
+      }
+    }
+    if (i === stop && stop < code.length) found.push({ specifier: null, line: lineAt(m.index) });
   }
   return found;
 }
 
-// Files a root-relative target may resolve to.
+// Files a root-relative target may resolve to. The "<dir>/package.json" + ENTRY item stands for
+// the files that folder's package.json entry fields name; dependencyNote expands it. The marker
+// keeps it apart from an import that names a package.json file itself.
+const ENTRY = "?entry";
 function variants(target) {
-  const list = [target, ...EXTS.map((e) => target + e), ...EXTS.map((e) => `${target}/index${e}`), `${target}/package.json`];
+  const list = [target, ...EXTS.map((e) => target + e), ...EXTS.map((e) => `${target}/index${e}`), `${target}/package.json${ENTRY}`];
   // A ".js"-style import may name a TypeScript source or declaration file.
   const swap = { ".js": [".ts", ".tsx", ".d.ts"], ".jsx": [".tsx", ".d.ts"], ".mjs": [".mts", ".d.mts"], ".cjs": [".cts", ".d.cts"] }[path.posix.extname(target)];
   if (swap) list.push(...swap.map((e) => target.slice(0, -path.posix.extname(target).length) + e));
@@ -449,7 +606,7 @@ function effectiveOptions(file, seen) {
 // folder alias targets resolve from (`baseUrl` when set, else the folder of the config that set
 // `paths`) and `configDir` is the picked config's folder, which `${configDir}` in `baseUrl` or a
 // target stands for even when an extended config set it. Null when no config applies or none in
-// the chain sets `paths` and the chain was read whole.
+// the chain sets `paths` or `baseUrl` and the chain was read whole.
 function pathAliases(root, fromPath, cache) {
   let config = null;
   for (const dir of ancestors(fromPath)) {
@@ -463,19 +620,27 @@ function pathAliases(root, fromPath, cache) {
     const o = effectiveOptions(config, new Set());
     const configDir = slash(path.dirname(config));
     const base = o.baseUrl ? path.resolve(o.baseUrl.dir, o.baseUrl.value.replaceAll("${configDir}", () => configDir)) : o.paths?.dir;
-    cache.set(config, o.paths ? { root, base, configDir, paths: o.paths.value, incomplete: o.incomplete } : o.incomplete ? { incomplete: true } : null);
+    const found = o.paths || o.baseUrl;
+    cache.set(config, found ? { root, base, configDir, paths: o.paths?.value ?? null, baseUrl: !!o.baseUrl, incomplete: o.incomplete } : o.incomplete ? { incomplete: true } : null);
   }
   return cache.get(config);
 }
 
+// A target path made root-relative, or kept absolute when it lies outside the root.
+function underRoot(root, abs) {
+  const rel = path.relative(root, abs);
+  return leaves(rel) ? slash(abs) : slash(rel) || ".";
+}
+
 // Root-relative files an alias specifier may resolve to, or null when no alias matches. As in
 // TypeScript, an exact key wins, then the wildcard key with the longest prefix before its "*".
+// With `baseUrl` set and no key matching, a bare specifier is tried under `baseUrl`.
 function aliasCandidates(aliases, spec) {
   // Drop a query or hash suffix; a leading "#" is part of the name (`#utils`).
   const cut = spec.slice(1).search(/[?#]/);
   if (cut >= 0) spec = spec.slice(0, cut + 1);
   let best = null;
-  for (const [key, targets] of Object.entries(aliases.paths)) {
+  for (const [key, targets] of Object.entries(aliases.paths ?? {})) {
     const star = key.indexOf("*");
     if (star < 0) {
       if (spec === key) {
@@ -488,14 +653,13 @@ function aliasCandidates(aliases, spec) {
     const hit = spec.length >= pre.length + post.length && spec.startsWith(pre) && spec.endsWith(post);
     if (hit && (!best || pre.length > best.pre.length)) best = { key, pre, targets, capture: spec.slice(pre.length, spec.length - post.length) };
   }
+  if (!best && aliases.baseUrl && !spec.startsWith("/")) return { key: "baseUrl", baseUrl: true, list: variants(underRoot(aliases.root, path.resolve(aliases.base, spec))) };
   if (!best || !Array.isArray(best.targets)) return null;
   // Targets may be absolute (a drive-letter path on Windows); outside the root they stay absolute.
   const list = best.targets.flatMap((t) => {
     // Replacement callbacks keep "$&" and similar in names literal.
     const target = String(t).replaceAll("\\", "/").replaceAll("${configDir}", () => aliases.configDir);
-    const abs = path.resolve(aliases.base, target.replace("*", () => best.capture));
-    const rel = path.relative(aliases.root, abs);
-    return variants(rel.startsWith("..") || path.isAbsolute(rel) ? slash(abs) : slash(rel) || ".");
+    return variants(underRoot(aliases.root, path.resolve(aliases.base, target.replace("*", () => best.capture))));
   });
   return { key: best.key, list };
 }
@@ -530,28 +694,55 @@ function dependencyNote(root, entries, excluded) {
   const unread = "the tsconfig.json or jsconfig.json, or a config it extends, could not be read";
   const scheme = (s) => /^[a-z][\w+.-]*:/i.test(s);
   const nameOf = (s) => s.split("/").slice(0, s.startsWith("@") ? 2 : 1).join("/");
-  // A bare specifier no alias resolves still loads from packages, as in TypeScript.
-  const isPackage = (from, s) => !s.startsWith("/") && (isBuiltin(nameOf(s)) || packageDeclared(root, from, nameOf(s)));
-  // How a relative or tsconfig/jsconfig alias specifier resolves: { relative, key, list,
+  // A bare specifier no alias resolves still loads from packages, as in TypeScript. A built-in
+  // is checked with its subpath (`fs/promises` is one, `fs/not-real` is not).
+  const isPackage = (from, s) => !s.startsWith("/") && (isBuiltin(s) || packageDeclared(root, from, nameOf(s)));
+  // Replaces each folder package.json item (see variants) with the files its entry fields name
+  // (types, typings, main, module, and string targets under exports "."). A package.json without
+  // them adds nothing: the folder's index files are already candidates. A missing package.json
+  // stays as its own path, so the deleted-file scan still sees a deleted one.
+  const expand = (list) =>
+    list.flatMap((c) => {
+      if (!c.endsWith(ENTRY)) return [c];
+      const file = c.slice(0, -ENTRY.length);
+      let pkg;
+      try {
+        pkg = JSON.parse(fs.readFileSync(path.resolve(root, file), "utf8").replace(/^\uFEFF/, ""));
+      } catch {
+        return fs.existsSync(path.resolve(root, file)) ? [] : [file];
+      }
+      const dot = pkg?.exports?.["."] ?? (typeof pkg?.exports === "string" ? pkg.exports : null);
+      const strings = (v, depth = 0) => (typeof v === "string" ? [v] : v && typeof v === "object" && depth < 4 ? Object.values(v).flatMap((x) => strings(x, depth + 1)) : []);
+      const fields = [pkg?.types, pkg?.typings, pkg?.main, pkg?.module, ...strings(dot)].filter((f) => typeof f === "string");
+      const dir = file.slice(0, -"/package.json".length);
+      return fields.flatMap((f) => variants(path.posix.normalize(path.posix.join(dir, f.replaceAll("\\", "/")))).filter((x) => !x.endsWith(ENTRY)));
+    });
+  // How a relative or tsconfig/jsconfig alias specifier resolves: { relative, baseUrl, key, list,
   // incomplete }, where `list` holds the root-relative files it may name. Null when no alias
   // applies and the config chain was read whole.
   const local = (from, s) => {
-    if (s.startsWith(".")) return { relative: true, list: candidates(from, s) };
+    if (s.startsWith(".")) return { relative: true, list: expand(candidates(from, s)) };
     const aliases = pathAliases(root, from, configs);
     if (!aliases) return null;
-    const hit = aliases.paths && aliasCandidates(aliases, s);
-    return hit ? { key: hit.key, list: hit.list, incomplete: aliases.incomplete } : aliases.incomplete ? { incomplete: true } : null;
+    const hit = (aliases.paths || aliases.baseUrl) && aliasCandidates(aliases, s);
+    return hit ? { key: hit.key, baseUrl: hit.baseUrl, list: expand(hit.list), incomplete: aliases.incomplete } : aliases.incomplete ? { incomplete: true } : null;
   };
   const changed = entries.filter((e) => JS.test(e.path) && !e.binary && (e.status === "added" || e.status === "modified"));
   for (const e of changed) {
     for (const { specifier: s, line } of importsOf(toLF(e._head).toString("utf8"))) {
+      if (s === null) {
+        unchecked.push({ from: e.path, line, specifier: "import", reason: "import bindings longer than 20,000 characters; not read" });
+        continue;
+      }
       const at = { from: e.path, line, specifier: s };
       if (scheme(s)) {
         if (s.startsWith("node:") && !isBuiltin(s)) unresolvedDeps.push({ ...at, reason: "not a Node built-in" });
         continue;
       }
-      const files = local(e.path, s);
+      let files = local(e.path, s);
       if (files?.list?.some(isFile)) continue;
+      // Nothing under baseUrl: classify the specifier as a package import.
+      if (files?.baseUrl) files = files.incomplete ? { incomplete: true } : null;
       if (files?.relative) {
         unresolvedDeps.push({ ...at, reason: "no file at this relative path" });
         continue;
@@ -562,6 +753,7 @@ function dependencyNote(root, entries, excluded) {
       if (files?.list && files.incomplete) unchecked.push({ ...at, reason: `no file at path alias "${files.key}", but ${unread}` });
       else if (files?.list) unresolvedDeps.push({ ...at, reason: `no file at path alias "${files.key}"` });
       else if (files?.incomplete) unchecked.push({ ...at, reason: `not resolved: ${unread}` });
+      else if (isBuiltin(name)) unresolvedDeps.push({ ...at, reason: `not a Node built-in: "${name}" has no such subpath` });
       else if (/^(?:@\/|[~#/$])/.test(s)) unchecked.push({ ...at, reason: "path alias not set in tsconfig.json or jsconfig.json, or an absolute path" });
       // No package of this scope anywhere: more likely a bundler alias (vite, webpack) than a
       // missing package.
@@ -570,7 +762,8 @@ function dependencyNote(root, entries, excluded) {
     }
   }
   // Workspace files that imported a file this change deletes.
-  const deleted = new Set(entries.filter((e) => e.status === "deleted").map((e) => e.path));
+  // Keyed by FOLD, so `./foo` matches a deleted `Foo.ts` where the file system ignores case.
+  const deleted = new Map(entries.filter((e) => e.status === "deleted").map((e) => [FOLD(e.path), e.path]));
   let scanned = 0;
   if (deleted.size) {
     const all = git(root, ["ls-files", "-co", "--exclude-standard", "-z"]).toString("utf8").split("\0");
@@ -581,8 +774,8 @@ function dependencyNote(root, entries, excluded) {
       if (fs.statSync(file).size > 1 << 20) continue;
       scanned++;
       for (const { specifier: s, line } of importsOf(fs.readFileSync(file, "utf8"))) {
-        const files = scheme(s) ? null : local(p, s);
-        const gone = files?.list?.find((x) => deleted.has(x));
+        const files = s === null || scheme(s) ? null : local(p, s);
+        const gone = deleted.get(FOLD(files?.list?.find((x) => deleted.has(FOLD(x))) ?? ""));
         if (!gone || files.list.some(isFile) || (!files.relative && isPackage(p, s))) continue;
         const at = { from: p, line, specifier: s };
         // An unread config could override the alias, so the break is not certain.
@@ -697,12 +890,17 @@ function parseArgs(argv) {
 // Paths inside root, relative and with forward slashes; paths outside root are dropped.
 function relInside(root, abs) {
   const rel = path.relative(root, abs);
-  return !rel || rel.startsWith("..") || path.isAbsolute(rel) ? null : slash(rel);
+  return !rel || leaves(rel) ? null : slash(rel);
+}
+
+function caseRule(root) {
+  return gitText(root, ["config", "--type=bool", "--default=false", "core.ignorecase"]) === "true" ? (p) => p.toLowerCase() : (p) => p;
 }
 
 function verify(dir) {
   const inv = JSON.parse(fs.readFileSync(path.join(dir, "source-inventory.json"), "utf8"));
   const root = inv.workspace;
+  FOLD = caseRule(root);
   const excluded = [...inv.excluded, relInside(root, path.resolve(dir))].filter(Boolean);
   const now = collect(root, inv.base.sha, excluded);
   const then = new Map(inv.files.map((f) => [f.path, f]));
@@ -714,13 +912,25 @@ function verify(dir) {
     then.delete(e.path);
   }
   for (const p of then.keys()) drift.push(`no longer changed: ${p}`);
+  // The copies, pages and patch reviewers read must still be what the snapshot wrote.
+  const altered = [];
+  for (const a of inv.artifacts ?? []) {
+    let now = null;
+    try {
+      now = sha256(fs.readFileSync(a.path));
+    } catch {}
+    if (now !== a.sha256) altered.push(`snapshot file ${now === null ? "missing" : "changed"}: ${a.path}`);
+  }
+  if (!inv.artifacts) altered.push("inventory lists no snapshot file hashes; snapshot files not checked");
   const head = gitText(root, ["rev-parse", "HEAD"]);
-  console.log(JSON.stringify({ match: now.scopeHash === inv.scopeHash, scopeHash: inv.scopeHash, now: now.scopeHash, headThen: inv.head, headNow: head, drift }, null, 1));
-  if (now.scopeHash !== inv.scopeHash) process.exitCode = 1;
+  const match = now.scopeHash === inv.scopeHash && !altered.length;
+  console.log(JSON.stringify({ match, scopeHash: inv.scopeHash, now: now.scopeHash, headThen: inv.head, headNow: head, drift: [...drift, ...altered] }, null, 1));
+  if (!match) process.exitCode = 1;
 }
 
 function snapshot(o) {
   const root = path.resolve(gitText(path.resolve(o.root), ["rev-parse", "--show-toplevel"]));
+  FOLD = caseRule(root);
   // A tree base (such as the empty tree for a root commit) works for a plain comparison.
   let baseSha;
   try {
@@ -737,6 +947,13 @@ function snapshot(o) {
   const limit = o.partKb * 1024;
 
   const { entries, uncovered, scopeHash } = collect(root, baseSha, excluded);
+  // Every file reviewers read, with its hash, so --verify can tell when one was altered.
+  const artifacts = [];
+  const put = (file, data, encoding) => {
+    const written = writeFile(file, data, encoding);
+    artifacts.push({ path: written, sha256: sha256(fs.readFileSync(file)) });
+    return written;
+  };
   fs.mkdirSync(path.join(out, "base"), { recursive: true });
   fs.mkdirSync(path.join(out, "head"), { recursive: true });
   const files = entries.map((e) => {
@@ -748,12 +965,12 @@ function snapshot(o) {
       const bytes = e[`_${side}`];
       if (bytes === null) continue;
       const lf = toLF(bytes);
-      f[side] = writeFile(path.join(out, side, ...e.path.split("/")), lf);
+      f[side] = put(path.join(out, side, ...e.path.split("/")), lf);
       const text = lf.toString(BYTES);
       if (lf.length > limit || lineCount(text) > MAX_LINES) {
         const pages = paginate(text, limit);
         f.pages[side] = pages.map((pg, i) => ({
-          path: writeFile(path.join(out, "pages", side, ...`${e.path}.part-${String(i + 1).padStart(3, "0")}-of-${String(pages.length).padStart(3, "0")}.txt`.split("/")), pg.text, BYTES),
+          path: put(path.join(out, "pages", side, ...`${e.path}.part-${String(i + 1).padStart(3, "0")}-of-${String(pages.length).padStart(3, "0")}.txt`.split("/")), pg.text, BYTES),
           lines: `${pg.from}-${pg.to}`,
         }));
       }
@@ -763,7 +980,7 @@ function snapshot(o) {
 
   const sections = diffSnapshot(out);
   const patchText = sections.map((s) => s.text).join("");
-  const patchPath = writeFile(path.join(out, "scope.patch"), patchText, BYTES);
+  const patchPath = put(path.join(out, "scope.patch"), patchText, BYTES);
   const inPatch = new Set(sections.map((s) => s.path));
   const required = files.filter((f) => CONTENT.has(f.status) && !f.binary).map((f) => f.path);
   const missing = required.filter((p) => !inPatch.has(p));
@@ -776,7 +993,7 @@ function snapshot(o) {
   }
   const parts = patchText.length > limit || lineCount(patchText) > MAX_LINES ? patchParts(sections, limit) : [];
   const partEntries = parts.map((p, i) => ({
-    path: writeFile(path.join(out, "scope.patch.parts", `part-${String(i + 1).padStart(3, "0")}-of-${String(parts.length).padStart(3, "0")}.patch`), p.text, BYTES),
+    path: put(path.join(out, "scope.patch.parts", `part-${String(i + 1).padStart(3, "0")}-of-${String(parts.length).padStart(3, "0")}.patch`), p.text, BYTES),
     bytes: p.text.length,
     files: p.paths,
   }));
@@ -795,6 +1012,7 @@ function snapshot(o) {
     patch: { path: patchPath, bytes: patchText.length, sha256: sha256(Buffer.from(patchText, BYTES)), parts: partEntries },
     counts: Object.fromEntries(["added", "modified", "deleted", "eol-only", "mode-only"].map((s) => [s, files.filter((f) => f.status === s).length])),
     files,
+    artifacts,
     dependencyNote: dependencyNote(root, entries, excluded),
   };
   inv.counts.binary = files.filter((f) => f.binary).length;
