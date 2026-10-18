@@ -1,5 +1,5 @@
 ﻿{
-    "generated_at":  "2026-10-18T07:19:02Z",
+    "generated_at":  "2026-10-18T08:19:02Z",
     "stk":  {
                 "bytes_avoided":  152577033,
                 "caveat":  "gross bytes avoided, estimated at bytes/4; follow-up reads and overhead are excluded, so net token savings are unmeasured",
@@ -534,7 +534,7 @@
                 "est_tokens":  38144258
             },
     "rtk":  {
-                "commands":  351119,
+                "commands":  351147,
                 "tokens_saved":  "481.3M",
                 "reduction":  "45.1%",
                 "source":  "rtk gain (RTK\u0027s own accounting)"
