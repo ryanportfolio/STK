@@ -1,15 +1,15 @@
 ﻿{
-    "generated_at":  "2026-10-19T00:19:07Z",
+    "generated_at":  "2026-10-19T01:19:07Z",
     "stk":  {
-                "bytes_avoided":  153166272,
+                "bytes_avoided":  153215058,
                 "caveat":  "gross bytes avoided, estimated at bytes/4; follow-up reads and overhead are excluded, so net token savings are unmeasured",
-                "clamps":  3377,
+                "clamps":  3378,
                 "clients":  {
                                 "claude":  {
-                                               "bytes_avoided":  84246600,
-                                               "clamps":  1914,
+                                               "bytes_avoided":  84295386,
+                                               "clamps":  1915,
                                                "dup_hits":  299,
-                                               "est_tokens":  21061650
+                                               "est_tokens":  21073846
                                            },
                                 "codex":  {
                                               "bytes_avoided":  24952136,
@@ -528,13 +528,19 @@
                                  "clamps":  30,
                                  "date":  "2026-10-18",
                                  "dup_hits":  0
+                             },
+                             {
+                                 "bytes_avoided":  48786,
+                                 "clamps":  1,
+                                 "date":  "2026-10-19",
+                                 "dup_hits":  0
                              }
                          ],
                 "dup_hits":  650,
-                "est_tokens":  38291568
+                "est_tokens":  38303764
             },
     "rtk":  {
-                "commands":  352586,
+                "commands":  352823,
                 "tokens_saved":  "482.6M",
                 "reduction":  "45.1%",
                 "source":  "rtk gain (RTK\u0027s own accounting)"
