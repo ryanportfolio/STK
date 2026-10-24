@@ -1,6 +1,6 @@
 ---
 name: merge
-description: "Merge PRs through a Codex review loop: /codex-fullreview, fix, then /codex-review reruns (3 max) until clean, then CI and squash-merge. Runs only when the user types /merge; from then on, every PR in the session goes through the same loop and merges."
+description: "Merge PRs via Codex loop: /codex-fullreview, fix, /codex-review reruns (3 max) until clean, then CI + squash-merge. Only when user types /merge; then every session PR goes through it + merges."
 disable-model-invocation: true
 ---
 
@@ -39,8 +39,19 @@ Review skills' "review ≠ fix authority" rule lifted for in-scope fixes only. S
 ## Step 1: Integrate
 
 1. Inspect repo, remote, branch, working changes, existing PR. Target = task's or repo default. Keep unrelated work. Detached HEAD / on target → task branch before commit; respect user-chosen branch. Don't touch other checkouts w/o authorization.
-2. Run relevant local checks. Stage explicit paths, inspect staged diff, commit, push. Never bypass hooks. Reuse branch's open PR (`gh pr list --head <branch>`); else create one, description = final behavior + validation. Multiline bodies via file. Verify PR base, head, remote.
+2. Run relevant local checks. Stage explicit paths, inspect staged diff, commit, push. Never bypass hooks. Reuse branch's open PR (`gh pr list --head <branch>`); else create one, description = final behavior + validation. PR changes flows, boundaries, data model or state → description adds short Mermaid diagram of changed structure (GitHub renders it), so owner reads diagram instead of diff; repo keeps `.claude/reference/architecture.md` → same diagram there, same PR. No structural change (copy, styling, docs, config) → no diagram. Multiline bodies via file. Verify PR base, head, remote.
 3. Fetch target, check mergeability. Resolve unambiguous conflicts, keep both sides' intent. Semantic conflicts → investigate; ask only if resolution needs user decision not yet made. Reverify affected behavior, push.
+
+**Destination trust**, before session's first push to this repo. Print no credentials:
+
+- Push remote: `git remote get-url --push --all origin | sed -E 's#://[^/@]*@#://#'`. Pipe strips a token embedded as `https://<token>@github.com/...` before output reaches transcript; never run it unpiped. More than 1 URL → stop, ask: `git push origin` sends to every URL, check covers only one.
+- Active GitHub login only: `gh api user --jq .login`.
+- Destination: `gh repo view --json nameWithOwner,visibility,viewerPermission,url`.
+- Push remote must normalize to returned `nameWithOwner`; `viewerPermission` must be `WRITE`, `MAINTAIN`, or `ADMIN`.
+- Include verified login, repo, visibility, permission, and `gh repo view` URL in every `git push` approval justification. Generic "push the branch" not enough: automatic reviewer can't infer destination owner or privacy.
+- Every push names checked remote + PR head branch: `git push origin HEAD:refs/heads/<branch>`, `-u` only on branch's first push. Bare `git push` can follow `remote.pushDefault` or `branch.<name>.pushRemote` to an unchecked remote; refspec w/o destination (`HEAD`) can follow `remote.origin.push` or local branch name to wrong branch.
+- Later pushes this session reuse the evidence only while push URL list unchanged.
+- Remote not GitHub, queried repo does not match push remote, write permission absent, or check can't run → stop, ask user. Never weaken permissions, add global push allow-rule, or route around denial.
 
 Record PR number, target, head SHA.
 
