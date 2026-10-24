@@ -1,6 +1,6 @@
 ---
 name: perf-loop
-description: "Run measured optimization rounds with independent review for FPS, loading, latency, throughput, and resource use; with no named target, triage every dimension first. Use for $perf-loop or broad performance requests; skip isolated fixes."
+description: "Measured optimization rounds with independent review: FPS, loading, latency, throughput, resources; no named target → triage every dimension first. Use: $perf-loop, broad perf requests. Skip isolated fixes."
 ---
 
 # Performance loop
@@ -11,13 +11,14 @@ Goal: faster user-facing perf via reproducible experiments + independent review.
 
 ID key user journeys, workload, target devices, existing perf budgets. Infer sane defaults from project; state them. Ask only when missing info changes goal or needs user-owned tradeoff. Audit request → stop at findings + recommendations.
 
-Check exposed tools before promising profiling, browser capture, or independent review. Preflight chosen measurement method w/ 1 real run; inspect output. Missing capability → narrower claim: code inspection yields hypotheses, never proof of runtime gain. Report gap; finish useful authorized work w/o claiming full gate passed.
+Check exposed tools before promising profiling, browser capture, or independent review. Preflight chosen measurement method w/ 1 real run; inspect output. Missing capability → narrower claim: code inspection yields hypotheses, never proof of runtime gain. Report gap; finish useful authorized work w/o claiming full gate passed. For a named browser/device, preflight that target; another engine or emulated viewport supports only a separately labeled diagnostic. Record which timing, trace and memory methods actually work.
 
 Load only relevant guidance:
 
 - [Rendering and interaction](references/rendering.md): FPS, frame pacing, games, animation, responsiveness, visual quality.
 - [Loading and delivery](references/loading.md): startup, page loads, assets, bundles, network requests, readiness.
 - [Services and resources](references/services.md): APIs, DBs, throughput, memory, CPU, disk, sustained workloads.
+- [Firefox](references/firefox.md): Firefox-specific capture, graphics diagnosis and memory tools when Firefox is a target or behaves differently from another browser.
 
 Experiment evidence + before/after presentation → packaged [evidence report](references/evidence-report.md); measurement + review gates below still apply.
 
@@ -35,17 +36,25 @@ User names target → skip triage, mention it's available, go to baseline. Triag
 
 Capture current working state incl. relevant uncommitted changes → baseline + candidate rebuildable w/o discarding user work. Record source state, build mode, commands, dep versions, device/runtime, dataset, scenario, sampling duration. Acceptance → representative optimized build; label diagnostic dev runs separately.
 
-Control cache state, warmup, resolution, quality settings, concurrency, random seeds where useful, power/thermal. Cold + warm runs separate. Confirm intended build running. Record unavoidable diffs + their limits.
+Control cache state, warmup, resolution, quality settings, concurrency, random seeds where useful, power/thermal. Cold + warm runs separate. Confirm intended build running. Record unavoidable diffs + their limits. Each run record identifies build, runtime, phase and sample duration; include URL/origin and renderer mode where relevant. A port alone is not build identity. Use existing diagnostics or a saved record; do not add product UI solely for this.
+
+Separate relevant phases: initial startup, first action, steady animation, settled idle, hidden/resumed state and repeated navigation. Keep initial stalls in their own window; a rolling steady-state average must not erase them. Protect adjacent phases affected by a fix without expanding a narrow request into an unrelated audit.
+
+Save the scenario, protocol and run identities before long runs. Pilot enough of the real journey to validate collection and settled-state signals, then expand for repeatability or suspected accumulation. If extra cycles cannot answer the question with available tools, change the measurement path instead of extending the run.
 
 Repeat baseline enough to expose variation. Quick deterministic scenarios: ≥3 runs to start; expensive/noisy workloads need justified sample plan. Keep raw measurements, sample counts, units, distributions. Tiny sample ≠ reliable tail percentile. Fix measurement window + exclusion rules before evaluating candidates; keep + explain invalid runs, never silently drop inconvenient results.
 
 Benchmarks serial on shared hw. Pause agent builds, tests, other benchmarks, profiling that compete for measured resources. Shared browser control: 1 owner at a time. Separate build outputs + ports when multiple envs needed. Never kill unrelated user processes to clean up a measurement.
+
+Per-run scratch (browser profiles, user-data dirs, temp builds, raw dumps) → delete as each run ends, pass or fail, once the process using it has exited. Do it in harness code (`try/finally`, Node `fs.rm`), not a later shell step: agent command policies can refuse recursive shell deletes. Reuse 1 prepared template profile when the scenario needs no fresh state. Keep only artifacts the analysis needs: results, logs, captures. Long loop → check scratch size between rounds. Delete fails or is blocked → report path + size right away; never leave it silent.
 
 ## Set bar + profile
 
 Before editing, define: primary outcome metric, practical success threshold, protected scenarios, regression tolerances. Existing budgets, else derive target from request + baseline; label inferred targets. No universal score targets or unsupported all-device promises.
 
 Profile actual slow scenario. Rank bottlenecks by measured contribution, user impact, confidence, fix cost. Suspected bottlenecks = hypotheses. Prefer end-to-end wins over proxy wins (smaller bundle w/ unchanged readiness; higher FPS w/ worse input latency).
+
+When expensive components overlap, isolate them before an architectural rewrite: reproduce each alone, together, and with startup staggered as relevant. Use the smallest reversible experiment that distinguishes competing explanations. Workers can relieve main-thread contention while still competing for graphics resources. Isolation runs are diagnostic: prefer existing controls; record temporary edits and restore the source before acceptance runs. A retained change needs its own candidate comparison. Audit-only requests use existing controls unless code edits are authorized.
 
 ## Bounded experiments
 
@@ -83,7 +92,7 @@ Each reviewer → confirmed / refuted / unresolved findings w/ evidence paths + 
 
 Default ≤5 implementation rounds; fewer when target reached or further gains not worth cost. Stop early: 2 consecutive rounds w/o retained meaningful gain, or progress needs missing capability / user-owned tradeoff. Respect tighter user time/cost budget.
 
-Orchestrator checks final combined state w/ decisive benchmark + appropriate project verification. Attribute gains vs original baseline and, where useful, per round. Independent wins ≠ guaranteed combined speedup.
+Orchestrator checks final combined state w/ decisive benchmark + appropriate project verification. Recheck affected first-use, idle and navigation behavior; delayed work must not simply move a stall into the next action. Attribute gains vs original baseline and, where useful, per round. Independent wins ≠ guaranteed combined speedup.
 
 Report one outcome:
 
@@ -92,4 +101,4 @@ Report one outcome:
 - **Inconclusive:** evidence can't support reliable perf conclusion, or required verification missing.
 - **No retained improvement:** tested candidates failed, regressed, or gave no meaningful gain.
 
-Include compact before/after table, tested conditions, kept + discarded changes, evidence paths, unresolved limits. Claim only devices, workloads, envs actually tested. Clean up only processes + temp resources this task created.
+Include compact before/after table, tested conditions, kept + discarded changes, evidence paths, unresolved limits. Claim only devices, workloads, envs actually tested. Clean up only processes + temp resources this task created; report any scratch still on disk w/ path + size.

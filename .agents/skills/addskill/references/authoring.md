@@ -8,7 +8,7 @@ resources. A skill should change decisions, not narrate one successful session.
 
 Use a kebab-case folder and SKILL.md with YAML name and description. Describe the capability
 and the circumstances that should select it; include neighboring exclusions only when they
-prevent likely misrouting. Keep descriptions short. State concrete completion conditions,
+prevent likely misrouting. Keep descriptions short, in caveman-ultra style (SKILL.md). State concrete completion conditions,
 real constraints and relevant tools without pretending unavailable tools exist.
 
 Keep the entrypoint lean. Put substantial optional procedures in linked references, reusable
@@ -33,5 +33,5 @@ checks suffice for metadata or documentation corrections that do not change beha
 
 Report observed results, limitations and source provenance. One successful case establishes
 only that case; it does not establish general reliability or justify stronger instructions.
-Historical manuals and examples remain in the retired writing-skills resource folder in
-this repository; they are optional source material, not active deployment requirements.
+The retired writing-skills manuals and examples are no longer shipped; the originals remain
+in obra/superpowers as optional source material, not active deployment requirements.

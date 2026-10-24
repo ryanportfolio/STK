@@ -1,6 +1,6 @@
 ---
 name: "advocate"
-description: "Use only when the user explicitly invokes $advocate to challenge a change just made before it lands. Do not trigger from natural-language requests."
+description: "Only on explicit $advocate: challenge a just-made change before it lands. Never from natural-language requests."
 ---
 
 # Advocate: any reason not to?
@@ -72,12 +72,12 @@ The main section. Give the honest reasons not to do this, sharpened by the fresh
 - Concise: a handful of lines, not an essay. Cut anything that does not change how the user sees the change.
 - Adversarial but honest. The job is to voice the doubt that build momentum buried, but a change that should ship gets a clear "keep." Do not invent objections to look rigorous.
 - Specific over generic. No "consider the tradeoffs." Name the scope creep, the caller that breaks, the dependency, the simpler diff.
-- Render the review in caveman full (the default intensity) even when the session runs caveman ultra; a review carries nuance that ultra mangles. Resume the session mode afterward. If the session is not in caveman, write plainly.
+- Render the review as terse fragments without abbreviations or arrows, even when the session runs caveman ultra; a review carries nuance that ultra mangles. Resume the session mode afterward. If the session is not in caveman, write plainly.
 - This skill reviews; it does not implement. No file edits while it runs. A revise or drop verdict becomes a separate follow-up the user approves.
 
 ## Worked example
 
-Change under review: a `retryWithBackoff` wrapper added around every outbound HTTP call in `client.ts`; the goal was to stop one flaky webhook from failing. Ideal response (caveman full):
+Change under review: a `retryWithBackoff` wrapper added around every outbound HTTP call in `client.ts`; the goal was to stop one flaky webhook from failing. Ideal response (terse fragments):
 
 > **Change:** `retryWithBackoff` wrapped around all outbound calls in `client.ts`. Goal: stop one flaky webhook failing.
 >

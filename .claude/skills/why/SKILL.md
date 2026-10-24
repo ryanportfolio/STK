@@ -1,5 +1,5 @@
 ---
-description: Pressure-test a recommendation with one fresh reviewer. Use when the user types /why, or before you present your own weighty recommendation (hard to undo, two or more real options, or real time or money at stake). Never trigger from ordinary why questions or paraphrases.
+description: "Pressure-test a recommendation with one fresh reviewer: on /why, or before presenting own weighty rec (hard to undo, 2+ real options, real time or money at stake). Never from ordinary why questions or paraphrases."
 ---
 
 # Why
@@ -72,12 +72,12 @@ A real header (`### Why it matters`). One to three sentences: the stakes, the pr
 - **Honest over flattering.** The value is surfacing weak spots — the user can already see the pick. If a harder look shows the recommendation was wrong or weak, lead with that; self-correcting here is a feature.
 - **Specific over generic.** "Wouter has no built-in data loaders, so route-level data fetching you bolt on yourself" beats "there are tradeoffs to consider."
 - **Don't re-litigate the thread.** Review the pick, not the conversation.
-- **Render the review in caveman *full* (the default intensity)** — even when the session is running caveman *ultra*. A review carries reasoning and nuance that ultra's compression mangles; full stays terse but readable. Resume the session's normal mode afterward. If the session isn't in caveman at all, just write plainly.
+- **Render the review as terse fragments without abbreviations or arrows**, even when the session runs caveman ultra. A review carries reasoning and nuance that ultra's compression mangles; plain fragments stay terse but readable. Resume the session's normal mode afterward. If the session isn't in caveman at all, just write plainly.
 - This skill **reviews and explains — it does not implement.** No file edits while running it. If the review changes the user's mind, that's a separate follow-up.
 
 ## Worked example
 
-Pick under review: *"Use Wouter instead of React Router for the new settings pages."* An ideal `/why` response (caveman full):
+Pick under review: *"Use Wouter instead of React Router for the new settings pages."* An ideal `/why` response (terse fragments):
 
 > **Pick:** Wouter for the new settings pages, not React Router.
 >

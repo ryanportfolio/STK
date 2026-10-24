@@ -33,14 +33,13 @@ prove the running client loaded them.
 ## Prose mode
 
 Preserve the user's established choice; otherwise explain the inherited Caveman Ultra
-briefly and offer ultra/full/lite/normal if they want to change it. Code, commands, errors,
+briefly and offer normal prose if they want to turn it off. Ultra is the only level. Code, commands, errors,
 security explanations and irreversible confirmations retain normal technical prose.
 
 For Claude, the project default may be present in CLAUDE.md, the session-start hook, and
 the subagent hook (`.claude/hooks/subagent-start.sh` plus its `SubagentStart` entry in
 `.claude/settings.json`). Inspect them. This starter marks hook blocks caveman:directive,
-caveman:reminder, and caveman:call. Change their level together for full/lite, editing the
-subagent hook's rules to match, or for normal remove those default blocks, the default
+caveman:reminder, and caveman:call. For normal, remove those default blocks, the default
 section, and the subagent hook's writing-rule lines. Keep the subagent hook and its
 `SubagentStart` entry for its rule that subagents collect their helpers' results. Keep the
 skill available for explicit use.

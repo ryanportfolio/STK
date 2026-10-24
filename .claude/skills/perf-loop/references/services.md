@@ -16,6 +16,14 @@ Memory: distinguish peak, retained after idle/collection where observable, growt
 
 Change could shift costs → measure CPU time, I/O volume, cache size, resource peaks. Faster responses via unbounded memory, more workers, or extra infra → explicit tradeoff + representative capacity measurements.
 
+## Browser lifecycle and memory
+
+For an idle or retention complaint, pilot a representative navigation cycle early. Wait for actual transition/teardown completion; rapid interrupted navigation is a separate stress scenario. Sample equivalent points after warmup, then expand the cycle count if accumulation remains measurable. Keep natural-idle and forced-collection series separate.
+
+Distinguish three claims: old work stopped (callbacks/timers/listeners), resources disposed (scenes/textures/observers/workers), and objects collected. Balanced create/dispose counts, zero active loops or one heap drop cannot prove all three. Report each measured claim and its remaining limits; total process memory, JS heap and GPU allocations are not interchangeable.
+
+If historical objects persist, inspect retaining paths before further teardown edits. Check both application references and measurement references, including console variables, remote handles and diagnostic arrays. Release inspection handles before collection checks. WeakRefs surviving without a known collection opportunity do not alone prove a leak. If collection or retaining-path evidence is unavailable, bound the activity/disposal result and leave overall release unresolved.
+
 ## Correctness under pressure
 
 After caching, concurrency, query, or storage changes → verify relevant freshness, invalidation, permissions, ordering, pagination, cancellation, retries, transaction behavior. Preserve persistence + isolation guarantees. Include repeated ops + failure paths where change could alter them.
