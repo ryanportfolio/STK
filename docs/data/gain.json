@@ -1,15 +1,15 @@
 ﻿{
-    "generated_at":  "2026-11-04T01:19:15Z",
+    "generated_at":  "2026-11-04T02:19:14Z",
     "stk":  {
-                "bytes_avoided":  187039662,
+                "bytes_avoided":  187204377,
                 "caveat":  "gross bytes avoided, estimated at bytes/4; follow-up reads and overhead are excluded, so net token savings are unmeasured",
-                "clamps":  4249,
+                "clamps":  4255,
                 "clients":  {
                                 "claude":  {
-                                               "bytes_avoided":  113360023,
-                                               "clamps":  2718,
+                                               "bytes_avoided":  113524738,
+                                               "clamps":  2724,
                                                "dup_hits":  299,
-                                               "est_tokens":  28340005
+                                               "est_tokens":  28381184
                                            },
                                 "codex":  {
                                               "bytes_avoided":  29712103,
@@ -626,17 +626,17 @@
                                  "dup_hits":  0
                              },
                              {
-                                 "bytes_avoided":  21274,
-                                 "clamps":  1,
+                                 "bytes_avoided":  185989,
+                                 "clamps":  7,
                                  "date":  "2026-11-04",
                                  "dup_hits":  0
                              }
                          ],
                 "dup_hits":  650,
-                "est_tokens":  46759915
+                "est_tokens":  46801094
             },
     "rtk":  {
-                "commands":  471599,
+                "commands":  472084,
                 "tokens_saved":  "622.9M",
                 "reduction":  "45.8%",
                 "source":  "rtk gain (RTK\u0027s own accounting)"
