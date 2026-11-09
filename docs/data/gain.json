@@ -1,15 +1,15 @@
 ﻿{
-    "generated_at":  "2026-11-09T10:19:09Z",
+    "generated_at":  "2026-11-09T11:19:03Z",
     "stk":  {
-                "bytes_avoided":  194660896,
+                "bytes_avoided":  194725869,
                 "caveat":  "gross bytes avoided, estimated at bytes/4; follow-up reads and overhead are excluded, so net token savings are unmeasured",
-                "clamps":  4471,
+                "clamps":  4473,
                 "clients":  {
                                 "claude":  {
-                                               "bytes_avoided":  120250049,
-                                               "clamps":  2919,
+                                               "bytes_avoided":  120315022,
+                                               "clamps":  2921,
                                                "dup_hits":  299,
-                                               "est_tokens":  30062512
+                                               "est_tokens":  30078755
                                            },
                                 "codex":  {
                                               "bytes_avoided":  30443311,
@@ -656,17 +656,17 @@
                                  "dup_hits":  0
                              },
                              {
-                                 "bytes_avoided":  301382,
-                                 "clamps":  12,
+                                 "bytes_avoided":  366355,
+                                 "clamps":  14,
                                  "date":  "2026-11-09",
                                  "dup_hits":  0
                              }
                          ],
                 "dup_hits":  650,
-                "est_tokens":  48665224
+                "est_tokens":  48681467
             },
     "rtk":  {
-                "commands":  511094,
+                "commands":  511212,
                 "tokens_saved":  "671.6M",
                 "reduction":  "45.5%",
                 "source":  "rtk gain (RTK\u0027s own accounting)"
