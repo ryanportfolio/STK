@@ -1,15 +1,15 @@
 ﻿{
-    "generated_at":  "2026-11-11T20:19:08Z",
+    "generated_at":  "2026-11-11T21:19:07Z",
     "stk":  {
-                "bytes_avoided":  207547525,
+                "bytes_avoided":  207881562,
                 "caveat":  "gross bytes avoided, estimated at bytes/4; follow-up reads and overhead are excluded, so net token savings are unmeasured",
-                "clamps":  4673,
+                "clamps":  4674,
                 "clients":  {
                                 "claude":  {
-                                               "bytes_avoided":  132812794,
-                                               "clamps":  3114,
+                                               "bytes_avoided":  133146831,
+                                               "clamps":  3115,
                                                "dup_hits":  299,
-                                               "est_tokens":  33203198
+                                               "est_tokens":  33286707
                                            },
                                 "codex":  {
                                               "bytes_avoided":  30767195,
@@ -668,18 +668,18 @@
                                  "dup_hits":  0
                              },
                              {
-                                 "bytes_avoided":  2965607,
-                                 "clamps":  66,
+                                 "bytes_avoided":  3299644,
+                                 "clamps":  67,
                                  "date":  "2026-11-11",
                                  "dup_hits":  0
                              }
                          ],
                 "dup_hits":  650,
-                "est_tokens":  51886881
+                "est_tokens":  51970390
             },
     "rtk":  {
-                "commands":  540273,
-                "tokens_saved":  "692.9M",
+                "commands":  540464,
+                "tokens_saved":  "693.0M",
                 "reduction":  "45.3%",
                 "source":  "rtk gain (RTK\u0027s own accounting)"
             }
