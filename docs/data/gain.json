@@ -1,15 +1,15 @@
 ﻿{
-    "generated_at":  "2026-11-15T00:19:08Z",
+    "generated_at":  "2026-11-15T01:19:09Z",
     "stk":  {
-                "bytes_avoided":  217729965,
+                "bytes_avoided":  217862179,
                 "caveat":  "gross bytes avoided, estimated at bytes/4; follow-up reads and overhead are excluded, so net token savings are unmeasured",
-                "clamps":  4927,
+                "clamps":  4932,
                 "clients":  {
                                 "claude":  {
-                                               "bytes_avoided":  142400048,
-                                               "clamps":  3359,
+                                               "bytes_avoided":  142532262,
+                                               "clamps":  3364,
                                                "dup_hits":  299,
-                                               "est_tokens":  35600012
+                                               "est_tokens":  35633065
                                            },
                                 "codex":  {
                                               "bytes_avoided":  31362381,
@@ -690,14 +690,20 @@
                                  "clamps":  145,
                                  "date":  "2026-11-14",
                                  "dup_hits":  0
+                             },
+                             {
+                                 "bytes_avoided":  132214,
+                                 "clamps":  5,
+                                 "date":  "2026-11-15",
+                                 "dup_hits":  0
                              }
                          ],
                 "dup_hits":  650,
-                "est_tokens":  54432491
+                "est_tokens":  54465544
             },
     "rtk":  {
-                "commands":  571387,
-                "tokens_saved":  "728.5M",
+                "commands":  572594,
+                "tokens_saved":  "728.6M",
                 "reduction":  "44.8%",
                 "source":  "rtk gain (RTK\u0027s own accounting)"
             }
