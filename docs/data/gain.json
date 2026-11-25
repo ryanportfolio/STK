@@ -1,15 +1,15 @@
 ﻿{
-    "generated_at":  "2026-11-25T18:00:37Z",
+    "generated_at":  "2026-11-25T18:19:21Z",
     "stk":  {
-                "bytes_avoided":  255522896,
+                "bytes_avoided":  255547256,
                 "caveat":  "gross bytes avoided, estimated at bytes/4; follow-up reads and overhead are excluded, so net token savings are unmeasured",
-                "clamps":  6047,
+                "clamps":  6048,
                 "clients":  {
                                 "claude":  {
-                                               "bytes_avoided":  177154737,
-                                               "clamps":  4415,
+                                               "bytes_avoided":  177179097,
+                                               "clamps":  4416,
                                                "dup_hits":  299,
-                                               "est_tokens":  44288684
+                                               "est_tokens":  44294774
                                            },
                                 "codex":  {
                                               "bytes_avoided":  34400623,
@@ -752,17 +752,17 @@
                                  "dup_hits":  0
                              },
                              {
-                                 "bytes_avoided":  3050452,
-                                 "clamps":  120,
+                                 "bytes_avoided":  3074812,
+                                 "clamps":  121,
                                  "date":  "2026-11-25",
                                  "dup_hits":  0
                              }
                          ],
                 "dup_hits":  650,
-                "est_tokens":  63880724
+                "est_tokens":  63886814
             },
     "rtk":  {
-                "commands":  674960,
+                "commands":  675248,
                 "tokens_saved":  "1067.3M",
                 "reduction":  "51.5%",
                 "source":  "rtk gain (RTK\u0027s own accounting)"
